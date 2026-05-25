@@ -1,18 +1,23 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
-const fs = require("fs");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const PORT = process.env.PORT || 3000;
 
 app.get("/health", (req, res) => {
   res.json({ status: "running" });
+});
+
+app.get("/", (req, res) => {
+  res.redirect("/app");
+});
+
+app.get("/app", (req, res) => {
+  res.send(require("fs").readFileSync(__dirname + "/public/index.html", "utf8"));
 });
 
 app.post("/props", async (req, res) => {
