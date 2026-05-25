@@ -1,23 +1,36 @@
+cat > /tmp/server-fixed.js << 'ENDOFFILE'
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const PORT = process.env.PORT || 3000;
 
-// Serve the app
+// Serve index.html at root
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  const filePath = path.join(__dirname, "public", "index.html");
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.send("StatJunkie - public/index.html not found. Path: " + filePath);
+  }
 });
 
 // Health check
 app.get("/health", (req, res) => {
-  res.json({ status: "StatJunkie backend running", version: "1.0.0" });
+  const filePath = path.join(__dirname, "public", "index.html");
+  res.json({ 
+    status: "StatJunkie backend running", 
+    version: "1.0.0",
+    dirname: __dirname,
+    indexExists: fs.existsSync(filePath),
+    indexPath: filePath
+  });
 });
 
 // Generate props
@@ -29,15 +42,7 @@ app.post("/props", async (req, res) => {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
   });
 
-  const prompt = `Today is ${date}. League: ${league}.
-
-You are a sharp sports betting analyst. Give me 5 elite PrizePicks player props with 8.0+ confidence out of 10. Only picks you would bet real money on.
-
-Consider: blowout risk (win prob >75% = HIGH), recent 5-game average vs the line, minutes/rotation risk, defensive matchup, home/away splits.
-
-Return ONLY a raw JSON object. No markdown. No backticks. No explanation. First character must be { and last must be }.
-
-{"slate":"${league}","date":"${date}","summary":"One sharp sentence about today's best angle","best_lineup":["Player UNDER 16.5 Points","Player UNDER 13.5 Points"],"top_props":[{"player":"Full Player Name","team":"NYL","opponent":"PDX","stat":"Points","line":16.5,"pick":"UNDER","edge_score":8.5,"confidence":9.0,"combined_score":8.75,"reasoning":"3-4 sharp sentences: recent stats vs line, matchup angle, blowout risk, why this hits.","blowout_risk":"HIGH","game_time":"7:00 PM ET","risk_factors":[{"factor":"Blowout Risk","level":"HIGH","detail":"Team is 88% favourite on the spread."},{"factor":"Minutes Risk","level":"HIGH","detail":"Player gets pulled in Q4 during blowouts."},{"factor":"Recent Form","level":"LOW","detail":"Averaged 11 pts last 3 games, well under line."}]}]}`;
+  const prompt = `Today is ${date}. League: ${league}. You are a sharp sports betting analyst. Give me 5 elite PrizePicks player props with 8.0+ confidence out of 10. Return ONLY a raw JSON object. No markdown. No backticks. Start with { end with }. {"slate":"${league}","date":"${date}","summary":"One sharp sentence about today edge","best_lineup":["Player UNDER 16.5 Points","Player UNDER 13.5 Points"],"top_props":[{"player":"Full Name","team":"NYL","opponent":"PDX","stat":"Points","line":16.5,"pick":"UNDER","edge_score":8.5,"confidence":9.0,"combined_score":8.75,"reasoning":"3-4 sharp sentences why this hits","blowout_risk":"HIGH","game_time":"7:00 PM ET","risk_factors":[{"factor":"Blowout Risk","level":"HIGH","detail":"Team 88% favourite"},{"factor":"Minutes Risk","level":"HIGH","detail":"Gets pulled in Q4"},{"factor":"Recent Form","level":"LOW","detail":"11,11,14 last 3 games"}]}]}`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -74,4 +79,8 @@ Return ONLY a raw JSON object. No markdown. No backticks. No explanation. First 
   }
 });
 
+app.use(express.static(path.join(__dirname, "public")));
+
 app.listen(PORT, () => console.log(`StatJunkie on port ${PORT}`));
+ENDOFFILE
+cat /tmp/server-fixed.js
