@@ -147,7 +147,7 @@ async function fetchRealProps(league) {
   }
 
   props.sort((a, b) => b.edge_score - a.edge_score);
-  return props.slice(0, 8);
+  return props.slice(0, 80);
 }
 
 // Groq AI enrichment - writes reasoning for real props
@@ -228,7 +228,7 @@ function buildPayload(league, realProps, ai) {
   const reasoningMap = new Map();
   (ai?.reasoning || []).forEach((r) => reasoningMap.set(r.player, r));
 
-  const top_props = realProps.slice(0, 5).map((p) => {
+  const top_props = realProps.slice(0, 80).map((p) => {
     const r = reasoningMap.get(p.player) || {};
     const confidence = Math.min(10, p.fair_prob * 10 + 1.5);
     return {
