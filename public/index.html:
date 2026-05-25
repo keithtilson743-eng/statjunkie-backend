@@ -1,0 +1,544 @@
+mkdir -p /mnt/user-data/outputs/statjunkie-backend/public
+cat > /mnt/user-data/outputs/statjunkie-backend/public/index.html << 'ENDOFFILE'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>StatJunkie</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:#050505;color:#fff;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;}
+input{font-family:inherit;outline:none;}
+
+.header{background:linear-gradient(180deg,#0d0500,#050505);border-bottom:1px solid #1a0800;padding:50px 16px 12px;position:sticky;top:0;z-index:100;}
+.logo{font-size:26px;font-weight:900;letter-spacing:1px;line-height:1;}
+.logo .stat{color:#fff;}
+.logo .junkie{background:linear-gradient(135deg,#ff4400,#ff8800,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.live-badge{display:flex;align-items:center;gap:5px;background:#ff440011;border:1px solid #ff440033;border-radius:20px;padding:5px 11px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#ff4400;box-shadow:0 0 8px #ff4400;animation:pulse 2s infinite;}
+.live-text{font-size:10px;color:#ff6600;font-weight:700;}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;}
+.tab{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:900;letter-spacing:1px;white-space:nowrap;border:1px solid #1a0800;background:#0d0500;color:#3a2010;transition:all .2s;}
+.tab.active{background:linear-gradient(135deg,#cc2200,#ff6600);border-color:transparent;color:#fff;}
+.nav{background:#0a0300;border-bottom:1px solid #1a0800;display:flex;}
+.nav-btn{flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:#3a2010;font-size:12px;font-weight:900;letter-spacing:1px;transition:all .2s;}
+.nav-btn.active{border-bottom-color:#ff4400;color:#ff6600;}
+.content{padding:14px 16px;max-width:600px;margin:0 auto;padding-bottom:200px;}
+.analyze-btn{width:100%;padding:16px;background:linear-gradient(135deg,#cc2200,#ff4400,#ff8800);border-radius:14px;color:#fff;font-size:15px;font-weight:900;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 28px #ff440044;position:relative;overflow:hidden;}
+.analyze-btn:disabled{background:#1a0800;box-shadow:none;}
+.analyze-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffffff1a,transparent);transform:skewX(-20deg) translateX(-100%);animation:shimmer 2.5s infinite;}
+.analyze-btn:disabled::before{display:none;}
+.spinner{width:18px;height:18px;border:2px solid #2a1000;border-top:2px solid #ff6600;border-radius:50%;animation:spin .7s linear infinite;}
+.summary-box{background:linear-gradient(135deg,#0d0500,#100700);border:1px solid #1a0800;border-radius:14px;padding:12px 16px;margin-bottom:14px;}
+.box-label{font-size:9px;color:#ff440055;letter-spacing:2px;font-weight:700;margin-bottom:5px;}
+.summary-text{font-size:13px;color:#886644;line-height:1.6;}
+.lineup-box{background:linear-gradient(135deg,#100800,#0d0500);border:1px solid #ff440022;border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+.lineup-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.copy-btn{background:#ff440022;border:1px solid #ff440044;border-radius:8px;color:#ff6600;padding:6px 12px;font-size:11px;font-weight:800;}
+.faces-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #1a0800;}
+.face-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+.avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #ff440033;box-shadow:0 0 20px #ff440033;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;}
+.avatar img{width:100%;height:100%;object-fit:cover;object-position:top;}
+.face-name{font-size:8px;color:#ff6600;font-weight:800;text-align:center;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.face-pick{font-size:8px;font-weight:900;border-radius:4px;padding:1px 5px;}
+.lineup-pick{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #1a0800;}
+.lineup-pick:last-child{border-bottom:none;}
+.lineup-num{color:#ff440044;font-size:10px;min-width:20px;}
+.lineup-text{color:#cc6633;font-size:13px;font-weight:700;}
+.filter-row{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+.filter-btn{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:#0d0500;border:1px solid #1a0800;color:#3a2010;}
+.filter-btn.active-all{background:#ff880022;border-color:#ff8800;color:#fff;}
+.filter-btn.active-under{background:#ff440022;border-color:#ff4400;color:#fff;}
+.filter-btn.active-over{background:#ffcc0022;border-color:#ffcc00;color:#fff;}
+.count{margin-left:auto;color:#2a1000;font-size:11px;}
+.prop-card{background:linear-gradient(135deg,#0d0500,#100600);border:1px solid #1a0800;border-radius:16px;overflow:hidden;margin-bottom:14px;transition:box-shadow .3s;}
+.prop-card.in-slip{box-shadow:0 0 20px #ff440033;}
+.card-glow{height:1px;}
+.card-top{padding:14px 16px 0;display:flex;gap:14px;align-items:flex-start;}
+.card-avatar-col{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.pick-badge{font-size:9px;font-weight:800;letter-spacing:1px;border-radius:4px;padding:2px 7px;}
+.card-info{flex:1;}
+.card-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.risk-badge{border-radius:5px;padding:2px 7px;font-size:9px;font-weight:800;border:1px solid;}
+.slip-badge{background:#ffcc0022;color:#ffcc00;border:1px solid #ffcc0044;border-radius:5px;padding:2px 7px;font-size:9px;font-weight:800;}
+.player-name{font-size:19px;font-weight:900;color:#fff;line-height:1.1;}
+.matchup{font-size:11px;color:#3a2010;margin-top:2px;}
+.line-display{font-size:22px;font-weight:900;margin-top:6px;}
+.conf-wrap{margin-top:8px;}
+.conf-header{display:flex;justify-content:space-between;margin-bottom:3px;}
+.conf-label{font-size:9px;color:#ff440055;letter-spacing:1px;}
+.conf-value{font-size:11px;font-weight:800;}
+.conf-bar{height:3px;background:#1a0800;border-radius:2px;}
+.conf-fill{height:100%;border-radius:2px;transition:width 1.2s ease;}
+.score-col{text-align:center;padding-top:4px;}
+.score-num{font-size:28px;font-weight:900;line-height:1;}
+.score-label{font-size:8px;color:#3a2010;letter-spacing:1px;}
+.why-section{padding:12px 16px;border-top:1px solid #1a0800;margin-top:12px;}
+.why-label{font-size:9px;color:#ff440055;letter-spacing:2px;font-weight:700;margin-bottom:5px;}
+.why-text{font-size:13px;color:#886644;line-height:1.65;}
+.risk-toggle{padding:0 16px;}
+.risk-toggle button{background:none;border:none;color:#3a2010;font-size:10px;padding:6px 0;letter-spacing:1px;}
+.risk-breakdown{padding-bottom:12px;}
+.risk-item{display:flex;gap:8px;margin-bottom:7px;}
+.risk-factor{font-size:11px;color:#ff8800;font-weight:700;}
+.risk-detail{font-size:12px;color:#443322;line-height:1.45;}
+.card-actions{display:flex;gap:8px;padding:8px 16px 14px;}
+.add-btn{flex:1;padding:10px;font-size:12px;font-weight:900;border-radius:10px;}
+.copy-pick-btn{flex:1;padding:10px;font-size:12px;font-weight:900;border-radius:10px;background:#1a0800;border:1px solid #2a1000;color:#664422;}
+.error-box{background:#1a0800;border:1px solid #ff440033;border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+.error-title{color:#ff6600;font-size:13px;font-weight:700;margin-bottom:6px;}
+.error-msg{color:#664422;font-size:12px;line-height:1.6;word-break:break-word;}
+.retry-btn{margin-top:10px;background:#ff440022;border:1px solid #ff4400;border-radius:8px;color:#ff6600;padding:7px 14px;font-size:12px;font-weight:700;}
+.empty{text-align:center;padding:60px 20px;}
+.empty-icon{font-size:58px;margin-bottom:16px;}
+.empty-title{color:#2a1000;font-size:15px;font-weight:700;}
+.empty-sub{color:#1a0800;font-size:12px;margin-top:6px;}
+.disclaimer{margin-top:16px;padding:12px;background:#0a0300;border:1px solid #1a0800;border-radius:10px;font-size:10px;color:#2a1000;text-align:center;line-height:1.6;}
+.slip-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:linear-gradient(180deg,#0d0500,#050200);border-top:1px solid #ff440022;padding:12px 16px 30px;}
+.slip-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.slip-title{font-size:12px;color:#ff8800;font-weight:900;}
+.slip-count{color:#ff440055;}
+.slip-actions{display:flex;gap:8px;}
+.slip-clear{background:none;border:1px solid #1a0800;border-radius:8px;color:#3a2010;padding:4px 10px;font-size:10px;}
+.slip-copy{background:#ff440011;border:1px solid #ff440033;border-radius:8px;color:#ff6600;padding:4px 12px;font-size:10px;font-weight:800;}
+.slip-items{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.slip-item{background:#0d0500;border-radius:12px;padding:8px 10px;flex-shrink:0;min-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.slip-item-pick{font-size:9px;font-weight:900;}
+.slip-item-name{font-size:10px;color:#cc6633;font-weight:700;text-align:center;}
+.slip-item-line{font-size:9px;color:#3a2010;}
+.slip-item-remove{background:none;border:none;color:#2a1000;font-size:9px;}
+.slip-hint{margin-top:8px;font-size:10px;color:#2a1000;text-align:center;}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#0d0500;border:1px solid #ff440033;border-radius:20px;padding:10px 20px;color:#ff8800;font-size:13px;font-weight:700;z-index:999;white-space:nowrap;pointer-events:none;transition:opacity .3s;}
+.highlights-section{margin-bottom:20px;}
+.highlights-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.highlights-title{font-size:9px;color:#ff440055;letter-spacing:2px;font-weight:700;}
+.highlights-sub{font-size:11px;color:#3a2010;margin-top:2px;}
+.video-wrap{border-radius:14px;overflow:hidden;border:1px solid #1a0800;background:#0d0500;}
+.video-inner{padding-bottom:56.25%;position:relative;height:0;}
+.video-inner iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+.search-tabs{display:flex;gap:6px;margin-top:8px;overflow-x:auto;}
+.search-tab{background:#0d0500;border:1px solid #1a0800;border-radius:20px;padding:4px 12px;color:#3a2010;font-size:10px;font-weight:700;white-space:nowrap;}
+.search-tab.active{background:#ff440022;border-color:#ff4400;color:#ff6600;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes shimmer{0%{transform:skewX(-20deg) translateX(-200%)}100%{transform:skewX(-20deg) translateX(300%)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <div style="font-size:9px;color:#ff440055;letter-spacing:3px;font-weight:700;">PRIZEPICKS INTELLIGENCE</div>
+      <div class="logo"><span class="stat">STAT</span><span class="junkie">JUNKIE</span> 🎯</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="autoBtn" onclick="toggleAuto()" style="background:#0d0500;border:1px solid #1a0800;border-radius:20px;padding:5px 11px;color:#3a2010;font-size:10px;font-weight:700;">🔄 AUTO</button>
+      <div class="live-badge"><div class="live-dot"></div><span class="live-text">LIVE</span></div>
+    </div>
+  </div>
+  <div class="tabs" id="leagueTabs"></div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="switchTab('props')" id="propsNavBtn">🎯 Props</button>
+  <button class="nav-btn" onclick="switchTab('highlights')" id="highlightsNavBtn">🎬 Highlights</button>
+</div>
+
+<div class="content">
+  <div id="propsTab">
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+      ⚡ ANALYZE <span id="leagueLabel">WNBA</span> PROPS
+    </button>
+    <div id="results"></div>
+  </div>
+  <div id="highlightsTab" style="display:none;">
+    <div class="highlights-section">
+      <div class="highlights-header">
+        <div>
+          <div class="highlights-title">🎬 <span id="hlLeague">WNBA</span> HIGHLIGHTS</div>
+          <div class="highlights-sub">Latest plays & top moments</div>
+        </div>
+      </div>
+      <div class="video-wrap">
+        <div class="video-inner">
+          <iframe id="videoFrame" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+      </div>
+      <div class="search-tabs" id="searchTabs"></div>
+    </div>
+  </div>
+</div>
+
+<div class="slip-bar" id="slipBar" style="display:none;">
+  <div class="slip-header">
+    <span class="slip-title">MY SLIP <span class="slip-count" id="slipCount">(0/6)</span></span>
+    <div class="slip-actions">
+      <button class="slip-clear" onclick="clearSlip()">Clear</button>
+      <button class="slip-copy" onclick="copySlip()">📋 Copy All</button>
+    </div>
+  </div>
+  <div class="slip-items" id="slipItems"></div>
+  <div class="slip-hint">Copy picks → open PrizePicks → enter each prop</div>
+</div>
+
+<div class="toast" id="toast" style="opacity:0;"></div>
+
+<script>
+const LEAGUES = ["WNBA","NBA","MLB","NHL","NFL"];
+const HIGHLIGHT_SEARCHES = {
+  WNBA:["WNBA best plays 2025","WNBA highlights today","Caitlin Clark highlights 2025"],
+  NBA:["NBA best plays 2025","NBA highlights today","NBA top dunks 2025"],
+  MLB:["MLB highlights today","MLB home runs 2025","MLB best plays 2025"],
+  NHL:["NHL goals highlights 2025","NHL best plays 2025","NHL highlights today"],
+  NFL:["NFL best plays 2025","NFL touchdowns 2025","NFL highlights 2025"],
+};
+const PICK_COLOR = {UNDER:"#ff4400",OVER:"#ffcc00"};
+const RISK_COLOR = {HIGH:"#ff2200",MEDIUM:"#ff8800",LOW:"#ffcc00"};
+const BG_COLORS = ["linear-gradient(135deg,#cc2200,#ff6600)","linear-gradient(135deg,#884400,#ff8800)","linear-gradient(135deg,#996600,#ffcc00)","linear-gradient(135deg,#aa3300,#ff5500)","linear-gradient(135deg,#773300,#ff7700)"];
+
+let league = "WNBA";
+let props = [];
+let slip = [];
+let autoOn = false;
+let autoTimer = null;
+let hlIdx = 0;
+let currentTab = "props";
+
+// Init
+function init() {
+  const tabsEl = document.getElementById("leagueTabs");
+  LEAGUES.forEach(l => {
+    const btn = document.createElement("button");
+    btn.className = "tab" + (l === league ? " active" : "");
+    btn.textContent = l;
+    btn.onclick = () => switchLeague(l);
+    tabsEl.appendChild(btn);
+  });
+  updateHighlights();
+}
+
+function switchLeague(l) {
+  league = l;
+  document.querySelectorAll(".tab").forEach((b,i) => b.className = "tab" + (LEAGUES[i]===l?" active":""));
+  document.getElementById("leagueLabel").textContent = l;
+  document.getElementById("hlLeague").textContent = l;
+  props = [];
+  document.getElementById("results").innerHTML = "";
+  updateHighlights();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById("propsTab").style.display = tab==="props"?"block":"none";
+  document.getElementById("highlightsTab").style.display = tab==="highlights"?"block":"none";
+  document.getElementById("propsNavBtn").className = "nav-btn" + (tab==="props"?" active":"");
+  document.getElementById("highlightsNavBtn").className = "nav-btn" + (tab==="highlights"?" active":"");
+}
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  const btn = document.getElementById("autoBtn");
+  btn.style.background = autoOn ? "#ff440022" : "#0d0500";
+  btn.style.borderColor = autoOn ? "#ff4400" : "#1a0800";
+  btn.style.color = autoOn ? "#ff6600" : "#3a2010";
+  btn.textContent = autoOn ? "🔄 AUTO ON" : "🔄 AUTO";
+  clearInterval(autoTimer);
+  if(autoOn) autoTimer = setInterval(analyze, 30*60*1000);
+}
+
+function updateHighlights() {
+  hlIdx = 0;
+  const searches = HIGHLIGHT_SEARCHES[league] || HIGHLIGHT_SEARCHES.WNBA;
+  document.getElementById("videoFrame").src = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(searches[0])}&modestbranding=1&rel=0`;
+  const tabs = document.getElementById("searchTabs");
+  tabs.innerHTML = "";
+  searches.forEach((s,i) => {
+    const btn = document.createElement("button");
+    btn.className = "search-tab" + (i===0?" active":"");
+    btn.textContent = s;
+    btn.onclick = () => {
+      hlIdx = i;
+      document.getElementById("videoFrame").src = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(s)}&modestbranding=1&rel=0`;
+      document.querySelectorAll(".search-tab").forEach((b,j) => b.className = "search-tab"+(j===i?" active":""));
+    };
+    tabs.appendChild(btn);
+  });
+}
+
+async function analyze() {
+  const btn = document.getElementById("analyzeBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> FINDING ${league} PROPS...`;
+  document.getElementById("results").innerHTML = "";
+
+  try {
+    const res = await fetch("/props", {
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({league})
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    if(!Array.isArray(data.top_props)||!data.top_props.length) throw new Error("No props returned");
+    props = data.top_props;
+    renderResults(data);
+    showToast(`🔥 ${props.length} elite props found!`);
+  } catch(e) {
+    document.getElementById("results").innerHTML = `
+      <div class="error-box">
+        <div class="error-title">⚠️ Error</div>
+        <div class="error-msg">${e.message}</div>
+        <button class="retry-btn" onclick="analyze()">🔄 Try Again</button>
+      </div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `⚡ ANALYZE ${league} PROPS`;
+}
+
+function renderResults(data) {
+  let html = `<div class="summary-box"><div class="box-label">TODAY'S EDGE</div><div class="summary-text">${data.summary||""}</div></div>`;
+
+  if(data.best_lineup&&data.best_lineup.length) {
+    html += `<div class="lineup-box">
+      <div class="lineup-header">
+        <div><div class="box-label" style="color:#ff8800">⚡ BEST LINEUP</div><div style="font-size:10px;color:#ff440055;margin-top:2px;">Copy all for PrizePicks</div></div>
+        <button class="copy-btn" onclick="copyLineup()">📋 Copy All</button>
+      </div>
+      <div class="faces-row">`;
+    props.slice(0,5).forEach(p => {
+      const pc = PICK_COLOR[p.pick]||"#ff4400";
+      const bg = BG_COLORS[(p.player.charCodeAt(0)||0)%BG_COLORS.length];
+      html += `<div class="face-item">
+        <div class="avatar" style="background:${bg}" id="av-${p.player.replace(/\s/g,'_')}">
+          ${p.player.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+        </div>
+        <div class="face-name">${p.player.split(" ").pop()}</div>
+        <div class="face-pick" style="color:${pc};background:${pc}22;">${p.pick}</div>
+      </div>`;
+      loadPhoto(p.player);
+    });
+    html += `</div>`;
+    data.best_lineup.forEach((pick,i) => {
+      html += `<div class="lineup-pick"><span class="lineup-num">#${i+1}</span><span class="lineup-text">${pick}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="filter-row">
+    <button class="filter-btn active-all" onclick="filterProps('ALL',this)">ALL</button>
+    <button class="filter-btn" onclick="filterProps('UNDER',this)">UNDER</button>
+    <button class="filter-btn" onclick="filterProps('OVER',this)">OVER</button>
+    <span class="count" id="propCount">${props.length} picks</span>
+  </div>
+  <div id="propCards">`;
+
+  props.forEach((p,i) => { html += renderCard(p,i); });
+  html += `</div><div class="disclaimer">AI analysis only · Not financial advice · Verify lines on PrizePicks · Bet responsibly</div>`;
+  document.getElementById("results").innerHTML = html;
+
+  // Load photos after render
+  props.forEach(p => loadPhoto(p.player));
+}
+
+function renderCard(p, i) {
+  const pc = PICK_COLOR[p.pick]||"#ff4400";
+  const rc = RISK_COLOR[p.blowout_risk]||"#ff8800";
+  const sc = p.combined_score>=8.5?"#ffcc00":p.combined_score>=7.5?"#ff8800":"#ff4400";
+  const bg = BG_COLORS[(p.player.charCodeAt(0)||0)%BG_COLORS.length];
+  const inSlipNow = slip.some(s=>s.player===p.player&&s.stat===p.stat);
+  const riskIcon = p.blowout_risk==="HIGH"?"🔴":p.blowout_risk==="LOW"?"🟡":"🟠";
+
+  return `<div class="prop-card${inSlipNow?" in-slip":""}" id="card-${i}">
+    <div class="card-glow" style="background:linear-gradient(90deg,transparent,${pc}44,transparent)"></div>
+    <div class="card-top">
+      <div class="card-avatar-col">
+        <div class="avatar" style="background:${bg}" id="card-av-${p.player.replace(/\s/g,'_')}-${i}">
+          ${p.player.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+        </div>
+        <div class="pick-badge" style="color:${pc};background:${pc}22;border:1px solid ${pc}44;">${p.pick}</div>
+      </div>
+      <div class="card-info">
+        <div class="card-badges">
+          <span class="risk-badge" style="color:${rc};background:${rc}22;border-color:${rc}44;">${riskIcon} ${p.blowout_risk} BLOWOUT</span>
+          ${inSlipNow?'<span class="slip-badge">✓ ON SLIP</span>':""}
+        </div>
+        <div class="player-name">${p.player}</div>
+        <div class="matchup">${p.team} vs ${p.opponent} · ${p.game_time}</div>
+        <div class="line-display">
+          <span style="color:${pc}">${p.pick} </span>
+          <span style="color:#fff">${p.line}</span>
+          <span style="color:#3a2010;font-size:14px;font-weight:400"> ${p.stat}</span>
+        </div>
+        <div class="conf-wrap">
+          <div class="conf-header">
+            <span class="conf-label">CONFIDENCE</span>
+            <span class="conf-value" style="color:${sc}">${(p.combined_score||0).toFixed(1)}/10</span>
+          </div>
+          <div class="conf-bar"><div class="conf-fill" style="width:${((p.combined_score||0)/10)*100}%;background:linear-gradient(90deg,#ff4400,${sc})"></div></div>
+        </div>
+      </div>
+      <div class="score-col">
+        <div class="score-num" style="color:${sc}">${(p.combined_score||0).toFixed(1)}</div>
+        <div class="score-label">SCORE</div>
+      </div>
+    </div>
+    <div class="why-section">
+      <div class="why-label">WHY THIS PICK</div>
+      <div class="why-text">${p.reasoning}</div>
+    </div>
+    <div class="risk-toggle">
+      <button onclick="toggleRisk(${i})">▼ SEE RISK BREAKDOWN</button>
+      <div class="risk-breakdown" id="risk-${i}" style="display:none;">
+        ${(p.risk_factors||[]).map(rf=>`
+          <div class="risk-item">
+            <span>${rf.level==="HIGH"?"🔴":rf.level==="MEDIUM"?"🟠":"🟡"}</span>
+            <div><div class="risk-factor">${rf.factor}</div><div class="risk-detail">${rf.detail}</div></div>
+          </div>`).join("")}
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="add-btn" onclick="toggleSlip(${i})" style="background:${inSlipNow?"#ff220022":"#ff440022"};border:1px solid ${inSlipNow?"#ff2200":"#ff4400"};color:${inSlipNow?"#ff4400":"#ff6600"};">
+        ${inSlipNow?"✕ Remove":"+ Add to Slip"}
+      </button>
+      <button class="copy-pick-btn" onclick="copyPick(${i})">📋 Copy Pick</button>
+    </div>
+  </div>`;
+}
+
+function loadPhoto(name) {
+  const slug = name.trim().replace(/ /g,"_");
+  fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`)
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(!d?.thumbnail?.source) return;
+      const src = d.thumbnail.source;
+      // Update all avatar elements for this player
+      document.querySelectorAll(`[id*="${name.replace(/\s/g,'_')}"]`).forEach(el=>{
+        if(el.classList.contains("avatar")){
+          el.innerHTML=`<img src="${src}" alt="${name}" onerror="this.parentElement.innerHTML='${name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}'">`;
+        }
+      });
+    }).catch(()=>{});
+}
+
+function toggleRisk(i) {
+  const el = document.getElementById(`risk-${i}`);
+  const btn = el.previousElementSibling;
+  if(el.style.display==="none"){
+    el.style.display="block";
+    btn.textContent="▲ HIDE RISK BREAKDOWN";
+  } else {
+    el.style.display="none";
+    btn.textContent="▼ SEE RISK BREAKDOWN";
+  }
+}
+
+function toggleSlip(i) {
+  const p = props[i];
+  const idx = slip.findIndex(s=>s.player===p.player&&s.stat===p.stat);
+  if(idx>=0) {
+    slip.splice(idx,1);
+    showToast(`Removed ${p.player}`);
+  } else {
+    if(slip.length>=6){showToast("Max 6 picks");return;}
+    slip.push(p);
+    showToast(`Added ${p.player}!`);
+  }
+  updateSlipBar();
+  // Re-render card
+  const cardEl = document.getElementById(`card-${i}`);
+  if(cardEl) cardEl.outerHTML = renderCard(p,i);
+  loadPhoto(p.player);
+}
+
+function copyPick(i) {
+  const p = props[i];
+  const text = `${p.player} ${p.pick} ${p.line} ${p.stat} (${p.team} vs ${p.opponent})`;
+  navigator.clipboard.writeText(text).catch(()=>{});
+  showToast(`📋 ${p.player} copied!`);
+}
+
+function copyLineup() {
+  const text = (window._lineup||[]).join("\n");
+  navigator.clipboard.writeText(text).catch(()=>{});
+  showToast("📋 Lineup copied!");
+}
+
+function copySlip() {
+  const text = slip.map(p=>`${p.player} ${p.pick} ${p.line} ${p.stat}`).join("\n");
+  navigator.clipboard.writeText(text).catch(()=>{});
+  showToast("📋 Slip copied!");
+}
+
+function clearSlip() {
+  slip = [];
+  updateSlipBar();
+  showToast("Slip cleared");
+}
+
+function updateSlipBar() {
+  const bar = document.getElementById("slipBar");
+  if(!slip.length){bar.style.display="none";return;}
+  bar.style.display="block";
+  document.getElementById("slipCount").textContent=`(${slip.length}/6)`;
+  let html="";
+  slip.forEach((p,i)=>{
+    const pc=PICK_COLOR[p.pick]||"#ff4400";
+    const bg=BG_COLORS[(p.player.charCodeAt(0)||0)%BG_COLORS.length];
+    html+=`<div class="slip-item" style="border:1px solid ${pc}33;">
+      <div class="avatar" style="width:36px;height:36px;font-size:12px;background:${bg}">${p.player.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}</div>
+      <div class="slip-item-pick" style="color:${pc}">${p.pick}</div>
+      <div class="slip-item-name">${p.player.split(" ").pop()}</div>
+      <div class="slip-item-line">${p.line} ${p.stat}</div>
+      <button class="slip-item-remove" onclick="removeSlip(${i})">✕</button>
+    </div>`;
+  });
+  document.getElementById("slipItems").innerHTML=html;
+}
+
+function removeSlip(i) {
+  slip.splice(i,1);
+  updateSlipBar();
+}
+
+function filterProps(type, btn) {
+  document.querySelectorAll(".filter-btn").forEach(b=>b.className="filter-btn");
+  btn.className=`filter-btn active-${type.toLowerCase()}`;
+  const filtered = type==="ALL" ? props : props.filter(p=>p.pick===type);
+  document.getElementById("propCount").textContent=`${filtered.length} picks`;
+  const cards = document.getElementById("propCards");
+  if(!cards) return;
+  let html="";
+  const allIdxs = type==="ALL" ? props.map((_,i)=>i) : props.map((p,i)=>p.pick===type?i:-1).filter(i=>i>=0);
+  allIdxs.forEach(i=>{ html+=renderCard(props[i],i); });
+  cards.innerHTML=html;
+  props.forEach(p=>loadPhoto(p.player));
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.opacity = "1";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.style.opacity="0", 2800);
+}
+
+// Store lineup for copy
+const origRenderResults = renderResults;
+function renderResults(data) {
+  window._lineup = data.best_lineup||[];
+  origRenderResults(data);
+}
+
+init();
+</script>
+</body>
+</html>
+ENDOFFILE
+echo "index.html done"
