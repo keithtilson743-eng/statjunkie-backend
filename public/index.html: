@@ -1,5 +1,4 @@
-mkdir -p /mnt/user-data/outputs/statjunkie-backend/public
-cat > /mnt/user-data/outputs/statjunkie-backend/public/index.html << 'ENDOFFILE'
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
