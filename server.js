@@ -1,24 +1,12 @@
 const express = require("express");
 const cors = require("cors");
-
 const app = express();
 app.use(cors());
 app.use(express.json());
-
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const PORT = process.env.PORT || 3000;
 
-app.get("/health", (req, res) => {
-  res.json({ status: "running" });
-});
-
-app.get("/", (req, res) => {
-  res.redirect("/app");
-});
-
-app.get("/app", (req, res) => {
-  res.send(require("fs").readFileSync(__dirname + "/public/index.html", "utf8"));
-});
+app.get("/health", (req, res) => res.json({ status: "running" }));
 
 app.post("/props", async (req, res) => {
   const { league } = req.body;
@@ -34,14 +22,10 @@ app.post("/props", async (req, res) => {
     const d = await r.json();
     if (d.error) return res.status(500).json({ error: d.error.message });
     const raw = (d.content||[]).map(b=>b.text||"").join("").trim();
-    const s = raw.indexOf("{");
-    const e = raw.lastIndexOf("}");
+    const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
     if (s===-1||e===-1) return res.status(500).json({ error:"No JSON" });
-    const parsed = JSON.parse(raw.slice(s,e+1));
-    res.json(parsed);
-  } catch(err) {
-    res.status(500).json({ error: err.message });
-  }
+    res.json(JSON.parse(raw.slice(s,e+1)));
+  } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-app.listen(PORT, () => console.log("StatJunkie running on port " + PORT));
+app.get("/", (req, res) => res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>StatJunkie</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#050505;color:#fff;font-family:system-ui,sans-serif}button{font-family:inherit;cursor:pointer}.header{background:#0d0500;border-bottom:1px solid #1a0800;padding:50px 16px 12px;position:sticky;top:0;z-index:100}.logo{font-size:28px;font-weight:900}.logo .s{color:#fff}.logo .j{background:linear-gradient(135deg,#ff4400,#ff8800,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.tabs{display:flex;gap:6px;overflow-x:auto;margin-top:12px}.tab{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:900;white-space:nowrap;border:1px solid #1a0800;background:#0d0500;color:#3a2010}.tab.active{background:linear-gradient(135deg,#cc2200,#ff6600);border-color:transparent;color:#fff}.content{padding:14px 16px;max-width:600px;margin:0 auto}.btn{width:100%;padding:16px;background:linear-gradient(135deg,#cc2200,#ff4400,#ff8800);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:900;letter-spacing:1px;margin-bottom:16px;box-shadow:0 4px 28px #ff440044}.btn:disabled{background:#1a0800;box-shadow:none}.card{background:#0d0500;border:1px solid #1a0800;border-radius:16px;padding:16px;margin-bottom:14px}.card-name{font-size:18px;font-weight:900;color:#fff;margin-bottom:4px}.card-matchup{font-size:11px;color:#3a2010;margin-bottom:
