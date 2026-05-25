@@ -6,115 +6,115 @@
 <title>StatJunkie</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-body{background:#050505;color:#fff;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;}
+body{background:#f5f5f7;color:#1a1a1a;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;}
 button{font-family:inherit;cursor:pointer;border:none;outline:none;}
 input{font-family:inherit;outline:none;}
-.header{background:linear-gradient(180deg,#0d0500,#050505);border-bottom:1px solid #1a0800;padding:50px 16px 12px;position:sticky;top:0;z-index:100;}
+.header{background:#fff;border-bottom:1px solid #e5e5e7;padding:50px 16px 12px;position:sticky;top:0;z-index:100;}
 .logo{font-size:26px;font-weight:900;letter-spacing:1px;line-height:1;}
-.logo .stat{color:#fff;}
-.logo .junkie{background:linear-gradient(135deg,#ff4400,#ff8800,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo .stat{color:#1a1a1a;}
+.logo .junkie{background:linear-gradient(135deg,#ff4400,#ff8800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.live-badge{display:flex;align-items:center;gap:5px;background:#ff440011;border:1px solid #ff440033;border-radius:20px;padding:5px 11px;}
+.live-badge{display:flex;align-items:center;gap:5px;background:#f0f0f2;border:1px solid #e5e5e7;border-radius:20px;padding:5px 11px;}
 .live-dot{width:6px;height:6px;border-radius:50%;background:#ff4400;box-shadow:0 0 8px #ff4400;animation:pulse 2s infinite;}
-.live-text{font-size:10px;color:#ff6600;font-weight:700;}
+.live-text{font-size:10px;color:#666;font-weight:700;}
 .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;}
-.tab{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:900;letter-spacing:1px;white-space:nowrap;border:1px solid #1a0800;background:#0d0500;color:#3a2010;transition:all .2s;}
-.tab.active{background:linear-gradient(135deg,#cc2200,#ff6600);border-color:transparent;color:#fff;}
-.nav{background:#0a0300;border-bottom:1px solid #1a0800;display:flex;}
-.nav-btn{flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:#3a2010;font-size:12px;font-weight:900;letter-spacing:1px;transition:all .2s;}
-.nav-btn.active{border-bottom-color:#ff4400;color:#ff6600;}
+.tab{padding:7px 16px;border-radius:8px;font-size:11px;font-weight:900;letter-spacing:1px;white-space:nowrap;border:1px solid #e5e5e7;background:#fff;color:#666;transition:all .2s;}
+.tab.active{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
+.nav{background:#fff;border-bottom:1px solid #e5e5e7;display:flex;}
+.nav-btn{flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:#888;font-size:12px;font-weight:900;letter-spacing:1px;transition:all .2s;}
+.nav-btn.active{border-bottom-color:#ff4400;color:#1a1a1a;}
 .content{padding:14px 16px;max-width:600px;margin:0 auto;padding-bottom:200px;}
-.analyze-btn{width:100%;padding:16px;background:linear-gradient(135deg,#cc2200,#ff4400,#ff8800);border-radius:14px;color:#fff;font-size:15px;font-weight:900;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 28px #ff440044;position:relative;overflow:hidden;}
-.analyze-btn:disabled{background:#1a0800;box-shadow:none;}
-.analyze-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffffff1a,transparent);transform:skewX(-20deg) translateX(-100%);animation:shimmer 2.5s infinite;}
+.analyze-btn{width:100%;padding:16px;background:linear-gradient(135deg,#ff4400,#ff8800);border-radius:14px;color:#fff;font-size:15px;font-weight:900;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px #ff440033;position:relative;overflow:hidden;}
+.analyze-btn:disabled{background:#ccc;box-shadow:none;color:#fff;}
+.analyze-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffffff33,transparent);transform:skewX(-20deg) translateX(-100%);animation:shimmer 2.5s infinite;}
 .analyze-btn:disabled::before{display:none;}
-.spinner{width:18px;height:18px;border:2px solid #2a1000;border-top:2px solid #ff6600;border-radius:50%;animation:spin .7s linear infinite;}
-.summary-box{background:linear-gradient(135deg,#0d0500,#100700);border:1px solid #1a0800;border-radius:14px;padding:12px 16px;margin-bottom:14px;}
-.box-label{font-size:9px;color:#ff440055;letter-spacing:2px;font-weight:700;margin-bottom:5px;}
-.summary-text{font-size:13px;color:#886644;line-height:1.6;}
-.lineup-box{background:linear-gradient(135deg,#100800,#0d0500);border:1px solid #ff440022;border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+.spinner{width:18px;height:18px;border:2px solid #ffffff44;border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;}
+.summary-box{background:#fff;border:1px solid #e5e5e7;border-radius:14px;padding:12px 16px;margin-bottom:14px;}
+.box-label{font-size:9px;color:#888;letter-spacing:2px;font-weight:700;margin-bottom:5px;}
+.summary-text{font-size:13px;color:#333;line-height:1.6;}
+.lineup-box{background:#fff;border:1px solid #e5e5e7;border-radius:14px;padding:14px 16px;margin-bottom:14px;}
 .lineup-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.copy-btn{background:#ff440022;border:1px solid #ff440044;border-radius:8px;color:#ff6600;padding:6px 12px;font-size:11px;font-weight:800;}
-.faces-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #1a0800;}
+.copy-btn{background:#fff5ee;border:1px solid #ff8800;border-radius:8px;color:#cc4400;padding:6px 12px;font-size:11px;font-weight:800;}
+.faces-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #f0f0f2;}
 .face-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
-.avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #ff440033;box-shadow:0 0 20px #ff440033;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;}
+.avatar{width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #e5e5e7;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;}
 .avatar img{width:100%;height:100%;object-fit:cover;object-position:top;}
-.face-name{font-size:8px;color:#ff6600;font-weight:800;text-align:center;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.face-name{font-size:8px;color:#333;font-weight:800;text-align:center;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .face-pick{font-size:8px;font-weight:900;border-radius:4px;padding:1px 5px;}
-.lineup-pick{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #1a0800;}
+.lineup-pick{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f2;}
 .lineup-pick:last-child{border-bottom:none;}
-.lineup-num{color:#ff440044;font-size:10px;min-width:20px;}
-.lineup-text{color:#cc6633;font-size:13px;font-weight:700;}
+.lineup-num{color:#bbb;font-size:10px;min-width:20px;}
+.lineup-text{color:#1a1a1a;font-size:13px;font-weight:700;}
 .filter-row{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
-.filter-btn{padding:5px 14px;border-radius:8px;font-size:11px;font-weight:900;background:#0d0500;border:1px solid #1a0800;color:#3a2010;}
-.filter-btn.active-all{background:#ff880022;border-color:#ff8800;color:#fff;}
-.filter-btn.active-under{background:#ff440022;border-color:#ff4400;color:#fff;}
-.filter-btn.active-over{background:#ffcc0022;border-color:#ffcc00;color:#fff;}
-.count{margin-left:auto;color:#2a1000;font-size:11px;}
-.prop-card{background:linear-gradient(135deg,#0d0500,#100600);border:1px solid #1a0800;border-radius:16px;overflow:hidden;margin-bottom:14px;transition:box-shadow .3s;}
-.prop-card.in-slip{box-shadow:0 0 20px #ff440033;}
+.filter-btn{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:900;background:#fff;border:1px solid #e5e5e7;color:#666;}
+.filter-btn.active-all{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
+.filter-btn.active-under{background:#fee;border-color:#cc2200;color:#cc2200;}
+.filter-btn.active-over{background:#efe;border-color:#118833;color:#118833;}
+.count{margin-left:auto;color:#888;font-size:11px;}
+.prop-card{background:#fff;border:1px solid #e5e5e7;border-radius:16px;overflow:hidden;margin-bottom:14px;transition:all .3s;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.prop-card.in-slip{border-color:#ff8800;box-shadow:0 2px 12px #ff880033;}
 .card-glow{height:1px;}
 .card-top{padding:14px 16px 0;display:flex;gap:14px;align-items:flex-start;}
 .card-avatar-col{display:flex;flex-direction:column;align-items:center;gap:6px;}
-.pick-badge{font-size:9px;font-weight:800;letter-spacing:1px;border-radius:4px;padding:2px 7px;}
+.pick-badge{font-size:9px;font-weight:800;letter-spacing:1px;border-radius:4px;padding:2px 7px;color:#fff;}
 .card-info{flex:1;}
 .card-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
 .risk-badge{border-radius:5px;padding:2px 7px;font-size:9px;font-weight:800;border:1px solid;}
-.slip-badge{background:#ffcc0022;color:#ffcc00;border:1px solid #ffcc0044;border-radius:5px;padding:2px 7px;font-size:9px;font-weight:800;}
-.player-name{font-size:19px;font-weight:900;color:#fff;line-height:1.1;}
-.matchup{font-size:11px;color:#3a2010;margin-top:2px;}
+.slip-badge{background:#fff5ee;color:#cc4400;border:1px solid #ff8800;border-radius:5px;padding:2px 7px;font-size:9px;font-weight:800;}
+.player-name{font-size:19px;font-weight:900;color:#1a1a1a;line-height:1.1;}
+.matchup{font-size:11px;color:#888;margin-top:2px;}
 .line-display{font-size:22px;font-weight:900;margin-top:6px;}
 .conf-wrap{margin-top:8px;}
 .conf-header{display:flex;justify-content:space-between;margin-bottom:3px;}
-.conf-label{font-size:9px;color:#ff440055;letter-spacing:1px;}
+.conf-label{font-size:9px;color:#888;letter-spacing:1px;}
 .conf-value{font-size:11px;font-weight:800;}
-.conf-bar{height:3px;background:#1a0800;border-radius:2px;}
+.conf-bar{height:4px;background:#f0f0f2;border-radius:2px;}
 .conf-fill{height:100%;border-radius:2px;transition:width 1.2s ease;}
 .score-col{text-align:center;padding-top:4px;}
-.score-num{font-size:28px;font-weight:900;line-height:1;}
-.score-label{font-size:8px;color:#3a2010;letter-spacing:1px;}
-.why-section{padding:12px 16px;border-top:1px solid #1a0800;margin-top:12px;}
-.why-label{font-size:9px;color:#ff440055;letter-spacing:2px;font-weight:700;margin-bottom:5px;}
-.why-text{font-size:13px;color:#886644;line-height:1.65;}
-.risk-toggle{padding:0 16px;}
-.risk-btn{width:100%;padding:8px;background:#1a080055;border:1px solid #1a0800;border-radius:8px;color:#ff440088;font-size:10px;font-weight:800;letter-spacing:1px;}
-.risk-content{padding:0 16px 12px;}
-.risk-item{background:#0a0300;border-radius:8px;padding:8px 10px;margin-top:8px;border-left:3px solid;}
+.score-num{font-size:28px;font-weight:900;line-height:1;color:#ff4400;}
+.score-label{font-size:8px;color:#999;letter-spacing:1px;}
+.why-section{padding:12px 16px;border-top:1px solid #f0f0f2;margin-top:12px;background:#fafafa;}
+.why-label{font-size:9px;color:#888;letter-spacing:2px;font-weight:700;margin-bottom:5px;}
+.why-text{font-size:13px;color:#333;line-height:1.65;}
+.risk-toggle{padding:8px 16px 0;background:#fafafa;}
+.risk-btn{width:100%;padding:8px;background:#fff;border:1px solid #e5e5e7;border-radius:8px;color:#666;font-size:10px;font-weight:800;letter-spacing:1px;}
+.risk-content{padding:0 16px 12px;background:#fafafa;}
+.risk-item{background:#fff;border:1px solid #e5e5e7;border-radius:8px;padding:8px 10px;margin-top:8px;border-left:3px solid;}
 .risk-header{display:flex;justify-content:space-between;margin-bottom:3px;}
 .risk-factor{font-size:11px;font-weight:800;}
 .risk-level{font-size:9px;font-weight:800;}
-.risk-detail{font-size:11px;color:#886644;line-height:1.5;}
-.card-actions{padding:12px 16px;border-top:1px solid #1a0800;display:flex;gap:8px;}
-.action-btn{flex:1;padding:9px;border-radius:8px;font-size:10px;font-weight:800;letter-spacing:1px;background:#0d0500;border:1px solid #1a0800;color:#886644;}
-.action-btn.slip{background:linear-gradient(135deg,#cc2200,#ff6600);color:#fff;border:none;}
-.action-btn.slip.in{background:#ff440022;color:#ff6600;border:1px solid #ff4400;}
-.error-box{background:#440000;border:1px solid #aa0000;border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;}
-.error-title{color:#ff6666;font-size:14px;font-weight:800;margin-bottom:6px;}
-.error-msg{color:#cc8888;font-size:12px;margin-bottom:10px;}
+.risk-detail{font-size:11px;color:#555;line-height:1.5;}
+.card-actions{padding:12px 16px;border-top:1px solid #f0f0f2;display:flex;gap:8px;background:#fff;}
+.action-btn{flex:1;padding:10px;border-radius:8px;font-size:10px;font-weight:800;letter-spacing:1px;background:#f5f5f7;border:1px solid #e5e5e7;color:#666;}
+.action-btn.slip{background:#1a1a1a;color:#fff;border:none;}
+.action-btn.slip.in{background:#fff5ee;color:#cc4400;border:1px solid #ff8800;}
+.error-box{background:#fee;border:1px solid #fcc;border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;}
+.error-title{color:#cc2200;font-size:14px;font-weight:800;margin-bottom:6px;}
+.error-msg{color:#883333;font-size:12px;margin-bottom:10px;}
 .retry-btn{background:#ff4400;color:#fff;padding:8px 16px;border-radius:8px;font-size:11px;font-weight:800;}
-.slip-bar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,#0d0500,#050505);border-top:1px solid #ff440044;padding:12px 16px 30px;z-index:200;max-height:60vh;overflow-y:auto;}
+.slip-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e5e7;padding:12px 16px 30px;z-index:200;max-height:60vh;overflow-y:auto;box-shadow:0 -4px 20px rgba(0,0,0,.08);}
 .slip-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.slip-title{font-size:11px;font-weight:900;color:#ff6600;letter-spacing:2px;}
-.slip-count{color:#ffcc00;}
+.slip-title{font-size:11px;font-weight:900;color:#1a1a1a;letter-spacing:2px;}
+.slip-count{color:#ff4400;}
 .slip-actions{display:flex;gap:6px;}
-.slip-clear{background:none;border:1px solid #1a0800;color:#3a2010;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;}
-.slip-copy{background:linear-gradient(135deg,#cc2200,#ff6600);color:#fff;border-radius:6px;padding:5px 12px;font-size:10px;font-weight:800;}
+.slip-clear{background:#f5f5f7;border:1px solid #e5e5e7;color:#666;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;}
+.slip-copy{background:#1a1a1a;color:#fff;border-radius:6px;padding:5px 12px;font-size:10px;font-weight:800;}
 .slip-items{display:flex;flex-direction:column;gap:5px;margin-bottom:6px;}
-.slip-item{display:flex;justify-content:space-between;align-items:center;background:#0a0300;border-radius:6px;padding:6px 10px;}
-.slip-item-text{font-size:11px;color:#cc6633;font-weight:600;}
-.slip-item-remove{background:none;border:none;color:#ff4400;font-size:14px;}
-.slip-hint{font-size:9px;color:#ff440055;text-align:center;letter-spacing:1px;}
-.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#cc2200,#ff6600);color:#fff;padding:10px 18px;border-radius:25px;font-size:12px;font-weight:800;box-shadow:0 4px 20px #ff440055;z-index:300;transition:opacity .3s;}
-.highlights-section{background:linear-gradient(135deg,#0d0500,#100700);border:1px solid #1a0800;border-radius:14px;padding:14px;margin-bottom:14px;}
+.slip-item{display:flex;justify-content:space-between;align-items:center;background:#f5f5f7;border-radius:6px;padding:6px 10px;}
+.slip-item-text{font-size:11px;color:#1a1a1a;font-weight:600;}
+.slip-item-remove{background:none;border:none;color:#cc2200;font-size:14px;}
+.slip-hint{font-size:9px;color:#999;text-align:center;letter-spacing:1px;}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 18px;border-radius:25px;font-size:12px;font-weight:800;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:300;transition:opacity .3s;}
+.highlights-section{background:#fff;border:1px solid #e5e5e7;border-radius:14px;padding:14px;margin-bottom:14px;}
 .highlights-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.highlights-title{font-size:14px;font-weight:900;color:#ff6600;}
-.highlights-sub{font-size:10px;color:#886644;margin-top:2px;}
+.highlights-title{font-size:14px;font-weight:900;color:#1a1a1a;}
+.highlights-sub{font-size:10px;color:#888;margin-top:2px;}
 .video-wrap{position:relative;width:100%;padding-bottom:56.25%;border-radius:12px;overflow:hidden;background:#000;margin-bottom:8px;}
 .video-inner{position:absolute;inset:0;}
 .video-inner iframe{width:100%;height:100%;border:0;}
 .search-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;}
-.search-tab{background:#0d0500;border:1px solid #1a0800;border-radius:20px;padding:4px 12px;color:#3a2010;font-size:10px;font-weight:700;white-space:nowrap;}
-.search-tab.active{background:#ff440022;border-color:#ff4400;color:#ff6600;}
+.search-tab{background:#fff;border:1px solid #e5e5e7;border-radius:20px;padding:5px 12px;color:#666;font-size:10px;font-weight:700;white-space:nowrap;}
+.search-tab.active{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes shimmer{0%{transform:skewX(-20deg) translateX(-100%)}100%{transform:skewX(-20deg) translateX(200%)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -124,11 +124,11 @@ input{font-family:inherit;outline:none;}
 <div class="header">
   <div class="header-row">
     <div>
-      <div style="font-size:9px;color:#ff440055;letter-spacing:3px;font-weight:700;">PRIZEPICKS INTELLIGENCE</div>
+      <div style="font-size:9px;color:#888;letter-spacing:3px;font-weight:700;">PRIZEPICKS INTELLIGENCE</div>
       <div class="logo"><span class="stat">STAT</span><span class="junkie">JUNKIE</span> 🎯</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button id="autoBtn" onclick="toggleAuto()" style="background:#0d0500;border:1px solid #1a0800;border-radius:20px;padding:5px 11px;color:#3a2010;font-size:10px;font-weight:700;">🔄 AUTO</button>
+      <button id="autoBtn" onclick="toggleAuto()" style="background:#fff;border:1px solid #e5e5e7;border-radius:20px;padding:5px 11px;color:#666;font-size:10px;font-weight:700;">🔄 AUTO</button>
       <div class="live-badge"><div class="live-dot"></div><span class="live-text">LIVE</span></div>
     </div>
   </div>
@@ -171,20 +171,20 @@ input{font-family:inherit;outline:none;}
 <script>
 const LEAGUES=["WNBA","NBA","MLB","NHL","NFL"];
 const HIGHLIGHT_SEARCHES={WNBA:["WNBA best plays 2025","WNBA highlights today","Caitlin Clark highlights 2025"],NBA:["NBA best plays 2025","NBA highlights today","NBA top dunks 2025"],MLB:["MLB highlights today","MLB home runs 2025","MLB best plays 2025"],NHL:["NHL goals highlights 2025","NHL best plays 2025","NHL highlights today"],NFL:["NFL best plays 2025","NFL touchdowns 2025","NFL highlights 2025"]};
-const PICK_COLOR={UNDER:"#ff4400",OVER:"#ffcc00"};
-const RISK_COLOR={HIGH:"#ff2200",MEDIUM:"#ff8800",LOW:"#ffcc00"};
-const BG_COLORS=["linear-gradient(135deg,#cc2200,#ff6600)","linear-gradient(135deg,#884400,#ff8800)","linear-gradient(135deg,#996600,#ffcc00)","linear-gradient(135deg,#aa3300,#ff5500)","linear-gradient(135deg,#773300,#ff7700)"];
+const PICK_COLOR={UNDER:"#cc2200",OVER:"#118833"};
+const RISK_COLOR={HIGH:"#cc2200",MEDIUM:"#cc7700",LOW:"#118833"};
+const BG_COLORS=["linear-gradient(135deg,#ff4400,#ff8800)","linear-gradient(135deg,#0066cc,#0099ff)","linear-gradient(135deg,#118833,#33bb55)","linear-gradient(135deg,#aa3388,#cc66aa)","linear-gradient(135deg,#cc7700,#ffaa33)"];
 let league="WNBA",props=[],slip=[],autoOn=false,autoTimer=null,hlIdx=0,currentTab="props";
 function init(){const t=document.getElementById("leagueTabs");LEAGUES.forEach(l=>{const b=document.createElement("button");b.className="tab"+(l===league?" active":"");b.textContent=l;b.onclick=()=>switchLeague(l);t.appendChild(b);});updateHighlights();}
 function switchLeague(l){league=l;document.querySelectorAll(".tab").forEach((b,i)=>b.className="tab"+(LEAGUES[i]===l?" active":""));document.getElementById("leagueLabel").textContent=l;document.getElementById("hlLeague").textContent=l;props=[];document.getElementById("results").innerHTML="";updateHighlights();}
 function switchTab(t){currentTab=t;document.getElementById("propsTab").style.display=t==="props"?"block":"none";document.getElementById("highlightsTab").style.display=t==="highlights"?"block":"none";document.getElementById("propsNavBtn").className="nav-btn"+(t==="props"?" active":"");document.getElementById("highlightsNavBtn").className="nav-btn"+(t==="highlights"?" active":"");}
-function toggleAuto(){autoOn=!autoOn;const b=document.getElementById("autoBtn");b.style.background=autoOn?"#ff440022":"#0d0500";b.style.borderColor=autoOn?"#ff4400":"#1a0800";b.style.color=autoOn?"#ff6600":"#3a2010";b.textContent=autoOn?"🔄 AUTO ON":"🔄 AUTO";clearInterval(autoTimer);if(autoOn)autoTimer=setInterval(analyze,30*60*1000);}
+function toggleAuto(){autoOn=!autoOn;const b=document.getElementById("autoBtn");b.style.background=autoOn?"#1a1a1a":"#fff";b.style.borderColor=autoOn?"#1a1a1a":"#e5e5e7";b.style.color=autoOn?"#fff":"#666";b.textContent=autoOn?"🔄 AUTO ON":"🔄 AUTO";clearInterval(autoTimer);if(autoOn)autoTimer=setInterval(analyze,30*60*1000);}
 function updateHighlights(){hlIdx=0;const s=HIGHLIGHT_SEARCHES[league]||HIGHLIGHT_SEARCHES.WNBA;document.getElementById("videoFrame").src=`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(s[0])}&modestbranding=1&rel=0`;const t=document.getElementById("searchTabs");t.innerHTML="";s.forEach((x,i)=>{const b=document.createElement("button");b.className="search-tab"+(i===0?" active":"");b.textContent=x;b.onclick=()=>{hlIdx=i;document.getElementById("videoFrame").src=`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(x)}&modestbranding=1&rel=0`;document.querySelectorAll(".search-tab").forEach((b,j)=>b.className="search-tab"+(j===i?" active":""));};t.appendChild(b);});}
 async function analyze(){const btn=document.getElementById("analyzeBtn");btn.disabled=true;btn.innerHTML=`<div class="spinner"></div> FINDING ${league} PROPS...`;document.getElementById("results").innerHTML="";const c=new AbortController();const tid=setTimeout(()=>c.abort(),60000);try{const r=await fetch("/props",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({league}),signal:c.signal});clearTimeout(tid);let d;try{d=await r.json();}catch{throw new Error(`Server returned non-JSON (HTTP ${r.status}). Try again.`);}if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);if(d.error)throw new Error(d.error);if(!Array.isArray(d.top_props)||!d.top_props.length)throw new Error(`No ${league} games with player props available right now. Try another league.`);props=d.top_props;renderResults(d);const tag=d.source==="real_odds"?"real odds":"AI projection";showToast(`🔥 ${props.length} ${league} props loaded (${tag})`);}catch(e){clearTimeout(tid);const m=e.name==="AbortError"?"Request timed out (60s). Server may be waking up — try again.":e.message;document.getElementById("results").innerHTML=`<div class="error-box"><div class="error-title">⚠️ Couldn't load ${league} props</div><div class="error-msg">${m}</div><button class="retry-btn" onclick="analyze()">🔄 Try Again</button></div>`;}btn.disabled=false;btn.innerHTML=`⚡ ANALYZE ${league} PROPS`;}
-function renderResults(data){let html=`<div class="summary-box"><div class="box-label">TODAY'S EDGE</div><div class="summary-text">${data.summary||""}</div></div>`;if(data.best_lineup&&data.best_lineup.length){html+=`<div class="lineup-box"><div class="lineup-header"><div><div class="box-label" style="color:#ff8800">⚡ BEST LINEUP</div><div style="font-size:10px;color:#ff440055;margin-top:2px;">Copy all for PrizePicks</div></div><button class="copy-btn" onclick="copyLineup()">📋 Copy All</button></div><div class="faces-row">`;data.best_lineup.forEach((p,i)=>{const n=p.split(" ").slice(0,2).join(" ");const in_=n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();const u=p.includes("UNDER");html+=`<div class="face-item"><div class="avatar" style="background:${BG_COLORS[i%BG_COLORS.length]}">${in_}</div><div class="face-name">${n}</div><div class="face-pick" style="background:${u?"#ff440022":"#ffcc0022"};color:${u?"#ff4400":"#ffcc00"};">${u?"UNDER":"OVER"}</div></div>`;});html+=`</div>`;data.best_lineup.forEach((p,i)=>{html+=`<div class="lineup-pick"><span class="lineup-num">${i+1}.</span><span class="lineup-text">${p}</span></div>`;});html+=`</div>`;}html+=`<div class="filter-row"><button class="filter-btn active-all" onclick="filterProps('all',this)">ALL</button><button class="filter-btn" onclick="filterProps('UNDER',this)">UNDER</button><button class="filter-btn" onclick="filterProps('OVER',this)">OVER</button><span class="count" id="propCount">${props.length} elite plays</span></div>`;html+=`<div id="propsList">${renderPropCards(props)}</div>`;document.getElementById("results").innerHTML=html;loadAvatars();}
-function renderPropCards(list){return list.map((p,i)=>{const c=PICK_COLOR[p.pick]||"#ff6600";const ins=slip.some(s=>s.player===p.player&&s.line===p.line);const in_=p.player.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();const cf=p.confidence||8;const sc=p.combined_score||p.edge_score||8;return `<div class="prop-card ${ins?"in-slip":""}" data-pick="${p.pick}" id="card-${i}"><div class="card-glow" style="background:linear-gradient(90deg,transparent,${c},transparent);"></div><div class="card-top"><div class="card-avatar-col"><div class="avatar" id="avatar-${i}" style="background:${BG_COLORS[i%BG_COLORS.length]}">${in_}</div><div class="pick-badge" style="background:${c}22;color:${c};">${p.pick}</div></div><div class="card-info"><div class="card-badges">${p.blowout_risk?`<span class="risk-badge" style="background:${RISK_COLOR[p.blowout_risk]}22;color:${RISK_COLOR[p.blowout_risk]};border-color:${RISK_COLOR[p.blowout_risk]}44;">${p.blowout_risk} RISK</span>`:""}${ins?`<span class="slip-badge">✓ IN SLIP</span>`:""}</div><div class="player-name">${p.player}</div><div class="matchup">${p.team||""} vs ${p.opponent||""} • ${p.game_time||""}</div><div class="line-display" style="color:${c};">${p.pick} ${p.line} ${p.stat}</div><div class="conf-wrap"><div class="conf-header"><span class="conf-label">CONFIDENCE</span><span class="conf-value" style="color:${c};">${cf.toFixed(1)}/10</span></div><div class="conf-bar"><div class="conf-fill" style="width:${cf*10}%;background:linear-gradient(90deg,${c},#ffcc00);"></div></div></div></div><div class="score-col"><div class="score-num" style="color:${c};">${sc.toFixed(1)}</div><div class="score-label">SCORE</div></div></div><div class="why-section"><div class="why-label">▸ WHY THIS HITS</div><div class="why-text">${p.reasoning||""}</div></div>${p.risk_factors&&p.risk_factors.length?`<div class="risk-toggle"><button class="risk-btn" onclick="toggleRisk(${i})">⚠️ RISK BREAKDOWN <span id="risk-arrow-${i}">▼</span></button></div><div class="risk-content" id="risk-content-${i}" style="display:none;">${p.risk_factors.map(r=>`<div class="risk-item" style="border-left-color:${RISK_COLOR[r.level]||"#888"};"><div class="risk-header"><span class="risk-factor" style="color:${RISK_COLOR[r.level]||"#888"};">${r.factor}</span><span class="risk-level" style="color:${RISK_COLOR[r.level]||"#888"};">${r.level}</span></div><div class="risk-detail">${r.detail}</div></div>`).join("")}</div>`:""}<div class="card-actions"><button class="action-btn slip ${ins?"in":""}" onclick="toggleSlip(${i})">${ins?"✓ IN SLIP":"+ ADD TO SLIP"}</button><button class="action-btn" onclick="copyPick(${i})">📋 COPY</button></div></div>`;}).join("");}
+function renderResults(data){let html=`<div class="summary-box"><div class="box-label">TODAY'S EDGE</div><div class="summary-text">${data.summary||""}</div></div>`;if(data.best_lineup&&data.best_lineup.length){html+=`<div class="lineup-box"><div class="lineup-header"><div><div class="box-label" style="color:#ff4400">⚡ BEST LINEUP</div><div style="font-size:10px;color:#888;margin-top:2px;">Copy all for PrizePicks</div></div><button class="copy-btn" onclick="copyLineup()">📋 Copy All</button></div><div class="faces-row">`;data.best_lineup.forEach((p,i)=>{const n=p.split(" ").slice(0,2).join(" ");const in_=n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();const u=p.includes("UNDER");html+=`<div class="face-item"><div class="avatar" style="background:${BG_COLORS[i%BG_COLORS.length]}">${in_}</div><div class="face-name">${n}</div><div class="face-pick" style="background:${u?"#fee":"#efe"};color:${u?"#cc2200":"#118833"};">${u?"UNDER":"OVER"}</div></div>`;});html+=`</div>`;data.best_lineup.forEach((p,i)=>{html+=`<div class="lineup-pick"><span class="lineup-num">${i+1}.</span><span class="lineup-text">${p}</span></div>`;});html+=`</div>`;}html+=`<div class="filter-row"><button class="filter-btn active-all" onclick="filterProps('all',this)">ALL</button><button class="filter-btn" onclick="filterProps('UNDER',this)">UNDER</button><button class="filter-btn" onclick="filterProps('OVER',this)">OVER</button><span class="count" id="propCount">${props.length} plays</span></div>`;html+=`<div id="propsList">${renderPropCards(props)}</div>`;document.getElementById("results").innerHTML=html;loadAvatars();}
+function renderPropCards(list){return list.map((p,i)=>{const c=PICK_COLOR[p.pick]||"#ff6600";const ins=slip.some(s=>s.player===p.player&&s.line===p.line);const in_=p.player.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();const cf=p.confidence||8;const sc=p.combined_score||p.edge_score||8;return `<div class="prop-card ${ins?"in-slip":""}" data-pick="${p.pick}" id="card-${i}"><div class="card-top"><div class="card-avatar-col"><div class="avatar" id="avatar-${i}" style="background:${BG_COLORS[i%BG_COLORS.length]}">${in_}</div><div class="pick-badge" style="background:${c};">${p.pick}</div></div><div class="card-info"><div class="card-badges">${p.blowout_risk?`<span class="risk-badge" style="background:${RISK_COLOR[p.blowout_risk]}15;color:${RISK_COLOR[p.blowout_risk]};border-color:${RISK_COLOR[p.blowout_risk]}55;">${p.blowout_risk} RISK</span>`:""}${ins?`<span class="slip-badge">✓ IN SLIP</span>`:""}</div><div class="player-name">${p.player}</div><div class="matchup">${p.team||""} vs ${p.opponent||""} • ${p.game_time||""}</div><div class="line-display" style="color:${c};">${p.pick} ${p.line} ${p.stat}</div><div class="conf-wrap"><div class="conf-header"><span class="conf-label">CONFIDENCE</span><span class="conf-value" style="color:${c};">${cf.toFixed(1)}/10</span></div><div class="conf-bar"><div class="conf-fill" style="width:${cf*10}%;background:${c};"></div></div></div></div><div class="score-col"><div class="score-num">${sc.toFixed(1)}</div><div class="score-label">SCORE</div></div></div><div class="why-section"><div class="why-label">▸ WHY THIS HITS</div><div class="why-text">${p.reasoning||""}</div></div>${p.risk_factors&&p.risk_factors.length?`<div class="risk-toggle"><button class="risk-btn" onclick="toggleRisk(${i})">⚠️ RISK BREAKDOWN <span id="risk-arrow-${i}">▼</span></button></div><div class="risk-content" id="risk-content-${i}" style="display:none;">${p.risk_factors.map(r=>`<div class="risk-item" style="border-left-color:${RISK_COLOR[r.level]||"#888"};"><div class="risk-header"><span class="risk-factor" style="color:${RISK_COLOR[r.level]||"#888"};">${r.factor}</span><span class="risk-level" style="color:${RISK_COLOR[r.level]||"#888"};">${r.level}</span></div><div class="risk-detail">${r.detail}</div></div>`).join("")}</div>`:""}<div class="card-actions"><button class="action-btn slip ${ins?"in":""}" onclick="toggleSlip(${i})">${ins?"✓ IN SLIP":"+ ADD TO SLIP"}</button><button class="action-btn" onclick="copyPick(${i})">📋 COPY</button></div></div>`;}).join("");}
 function loadAvatars(){props.forEach((p,i)=>{const s=p.player.replace(/\s+/g,"_");fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(s)}`).then(r=>r.json()).then(d=>{if(d.thumbnail&&d.thumbnail.source){const a=document.getElementById(`avatar-${i}`);if(a)a.innerHTML=`<img src="${d.thumbnail.source}" onerror="this.parentElement.innerHTML='${p.player.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}'">`;}}).catch(()=>{});});}
-function filterProps(t,b){document.querySelectorAll(".filter-btn").forEach(x=>x.className="filter-btn");if(t==="all")b.className="filter-btn active-all";if(t==="UNDER")b.className="filter-btn active-under";if(t==="OVER")b.className="filter-btn active-over";const f=t==="all"?props:props.filter(p=>p.pick===t);document.getElementById("propsList").innerHTML=renderPropCards(f);document.getElementById("propCount").textContent=`${f.length} elite plays`;loadAvatars();}
+function filterProps(t,b){document.querySelectorAll(".filter-btn").forEach(x=>x.className="filter-btn");if(t==="all")b.className="filter-btn active-all";if(t==="UNDER")b.className="filter-btn active-under";if(t==="OVER")b.className="filter-btn active-over";const f=t==="all"?props:props.filter(p=>p.pick===t);document.getElementById("propsList").innerHTML=renderPropCards(f);document.getElementById("propCount").textContent=`${f.length} plays`;loadAvatars();}
 function toggleRisk(i){const c=document.getElementById(`risk-content-${i}`);const a=document.getElementById(`risk-arrow-${i}`);if(c.style.display==="none"){c.style.display="block";a.textContent="▲";}else{c.style.display="none";a.textContent="▼";}}
 function toggleSlip(i){const p=props[i];const idx=slip.findIndex(s=>s.player===p.player&&s.line===p.line);if(idx>=0)slip.splice(idx,1);else if(slip.length<6)slip.push(p);else{showToast("Max 6 picks per slip");return;}updateSlip();document.getElementById("propsList").innerHTML=renderPropCards(props);loadAvatars();}
 function updateSlip(){const b=document.getElementById("slipBar");if(!slip.length){b.style.display="none";return;}b.style.display="block";document.getElementById("slipCount").textContent=`(${slip.length}/6)`;document.getElementById("slipItems").innerHTML=slip.map((p,i)=>`<div class="slip-item"><span class="slip-item-text">${p.player} ${p.pick} ${p.line} ${p.stat}</span><button class="slip-item-remove" onclick="removeFromSlip(${i})">✕</button></div>`).join("");}
