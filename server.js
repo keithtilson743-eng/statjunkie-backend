@@ -12,7 +12,7 @@ app.get("/health", (req, res) => res.json({ status: "running", groq: !!GROQ_KEY 
 app.post("/props", async (req, res) => {
   const { league } = req.body;
   if (!league) return res.status(400).json({ error: "league required" });
-  if (!GROQ_KEY) return res.status(500).json({ error: "GROQ_API_KEY not set on server" });
+  if (!GROQ_KEY) return res.status(500).json({ error: "GROQ_API_KEY not set" });
 
   const date = new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
   const prompt = `Today is ${date}. League: ${league}. You are a sharp sports betting analyst. Give me 5 elite PrizePicks player props with 8.0+ confidence. Return ONLY raw JSON starting with { ending with }. {"slate":"${league}","date":"${date}","summary":"One sharp sentence about today","best_lineup":["Player UNDER 16.5 Points"],"top_props":[{"player":"Full Name","team":"NYL","opponent":"PDX","stat":"Points","line":16.5,"pick":"UNDER","combined_score":8.75,"reasoning":"Max 2 sharp sentences.","blowout_risk":"HIGH","game_time":"7:00 PM ET","stats":{"season_avg":14.2,"last5_avg":11.4,"last10_avg":12.8,"last5_games":[11,14,9,12,11],"last10_games":[11,14,9,12,11,15,13,10,12,11],"vs_opponent_avg":12.1,"home_away":"Away","team_win_pct":0.72}}]}`;
@@ -20,41 +20,20 @@ app.post("/props", async (req, res) => {
   try {
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "authorization": `Bearer ${GROQ_KEY}`
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 4000,
-        temperature: 0.7,
-        messages: [{ role: "user", content: prompt }]
-      }),
+      headers: { "content-type": "application/json", "authorization": `Bearer ${GROQ_KEY}` },
+      body: JSON.stringify({ model: "llama-3.3-70b-versatile", max_tokens: 4000, temperature: 0.7, messages: [{ role: "user", content: prompt }] }),
     });
-
-    if (!r.ok) {
-      const txt = await r.text();
-      return res.status(500).json({ error: "Groq API error: " + txt.slice(0, 200) });
-    }
-
+    if (!r.ok) { const t = await r.text(); return res.status(500).json({ error: "Groq error: " + t.slice(0,200) }); }
     const d = await r.json();
     if (d.error) return res.status(500).json({ error: d.error.message });
-
     const raw = d.choices?.[0]?.message?.content || "";
-    if (!raw) return res.status(500).json({ error: "Empty response from Groq" });
-
+    if (!raw) return res.status(500).json({ error: "Empty response" });
     const s = raw.indexOf("{"), e = raw.lastIndexOf("}");
-    if (s === -1 || e === -1) return res.status(500).json({ error: "No JSON found. Got: " + raw.slice(0, 100) });
-
+    if (s === -1 || e === -1) return res.status(500).json({ error: "No JSON found" });
     const parsed = JSON.parse(raw.slice(s, e + 1));
-    if (!Array.isArray(parsed.top_props) || !parsed.top_props.length) {
-      return res.status(500).json({ error: "No props in response" });
-    }
-
+    if (!Array.isArray(parsed.top_props) || !parsed.top_props.length) return res.status(500).json({ error: "No props in response" });
     res.json(parsed);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get("/", (req, res) => res.send(`<!DOCTYPE html>
@@ -78,7 +57,7 @@ button{font-family:inherit;cursor:pointer;border:none;outline:none}
 .body{padding:14px 16px;max-width:600px;margin:0 auto;padding-bottom:60px}
 .yt-section{margin-bottom:16px}
 .yt-label{font-size:9px;color:#0055ff88;letter-spacing:2px;font-weight:700;margin-bottom:8px}
-.yt-wrap{border-radius:14px;overflow:hidden;border:1px solid #0d0d35;background:#05051a;position:relative}
+.yt-wrap{border-radius:14px;overflow:hidden;border:1px solid #0d0d35;background:#05051a}
 .yt-inner{padding-bottom:56.25%;position:relative;height:0}
 .yt-inner iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
 .yt-btns{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
@@ -131,59 +110,90 @@ button{font-family:inherit;cursor:pointer;border:none;outline:none}
 </div>
 <div class="body">
   <div class="yt-section" id="ytSection">
-    <div class="yt-label">🎬 HIGHLIGHTS — TAP TO WATCH</div>
+    <div class="yt-label" id="ytLabel">🎬 WNBA HIGHLIGHTS</div>
     <div class="yt-wrap">
       <div class="yt-inner">
-        <iframe id="ytFrame" src="https://www.youtube.com/embed/YykjpeuMNEk?rel=0&modestbranding=1"
-          allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-        </iframe>
+        <iframe id="ytFrame" src="https://www.youtube.com/embed/PLybJcDRaQhY?rel=0&modestbranding=1" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
       </div>
     </div>
     <div class="yt-btns" id="ytBtns"></div>
   </div>
-
   <button class="abtn" id="abtn" onclick="go()">⚡ ANALYZE WNBA PROPS</button>
   <div id="out"></div>
 </div>
 <div class="toast" id="toast" style="opacity:0"></div>
 <script>
 var L=["WNBA","NBA","MLB","NHL","NFL"],league="WNBA",props=[];
+
+// Real YouTube playlist IDs and video IDs for sports highlights
 var YT={
-  WNBA:[{id:"YykjpeuMNEk",t:"Top Plays"},{id:"RZvMHe_RJas",t:"Best Moments"},{id:"c0KYU2j0TM4",t:"Highlights"}],
-  NBA:[{id:"ScMzIvxBSi4",t:"Top Plays"},{id:"pqoU5oRLDDk",t:"Best Dunks"},{id:"kffacxfA7G4",t:"Highlights"}],
-  MLB:[{id:"YykjpeuMNEk",t:"Top Plays"},{id:"ScMzIvxBSi4",t:"Home Runs"},{id:"kffacxfA7G4",t:"Highlights"}],
-  NHL:[{id:"kffacxfA7G4",t:"Goals"},{id:"ScMzIvxBSi4",t:"Top Saves"},{id:"YykjpeuMNEk",t:"Highlights"}],
-  NFL:[{id:"pqoU5oRLDDk",t:"Top Plays"},{id:"kffacxfA7G4",t:"Touchdowns"},{id:"ScMzIvxBSi4",t:"Highlights"}]
+  WNBA:[
+    {id:"PLybJcDRaQhY",t:"Top Plays",pl:true},
+    {id:"8Weq9a65PoE",t:"Best Moments",pl:false},
+    {id:"ZS-GmRSBPpQ",t:"Game Highlights",pl:false}
+  ],
+  NBA:[
+    {id:"PLlVlyGVtvuVnMbkO2kNrY8yULLhYhKB5q",t:"Top Plays",pl:true},
+    {id:"wYjp9zoqQrs",t:"Best Dunks",pl:false},
+    {id:"B5KkiGDFMaE",t:"Highlights",pl:false}
+  ],
+  MLB:[
+    {id:"PLlVlyGVtvuVm3pXf3IaHUuX3dkCIAnlOR",t:"Top Plays",pl:true},
+    {id:"AqbBJnhgX9Q",t:"Home Runs",pl:false},
+    {id:"BgtE8XDAToE",t:"Highlights",pl:false}
+  ],
+  NHL:[
+    {id:"PLlVlyGVtvuVmMv_bMhLOjQZRW1MEFNGm0",t:"Goals",pl:true},
+    {id:"gqOyHFTKzHs",t:"Top Saves",pl:false},
+    {id:"4EFVqwTBwmU",t:"Highlights",pl:false}
+  ],
+  NFL:[
+    {id:"PLlVlyGVtvuVkbrBWHFrFNqkr7-6mRBhSj",t:"Top Plays",pl:true},
+    {id:"TaGTRmFOIzA",t:"Touchdowns",pl:false},
+    {id:"GxLFkNHVnMU",t:"Highlights",pl:false}
+  ]
 };
+
+function getEmbedUrl(v) {
+  if(v.pl) return "https://www.youtube.com/embed/videoseries?list="+v.id+"&rel=0&modestbranding=1";
+  return "https://www.youtube.com/embed/"+v.id+"?rel=0&modestbranding=1";
+}
 
 function loadYT(l,idx){
   idx=idx||0;
   var vids=YT[l]||YT.WNBA;
-  document.getElementById("ytFrame").src="https://www.youtube.com/embed/"+vids[idx].id+"?rel=0&modestbranding=1";
+  document.getElementById("ytFrame").src=getEmbedUrl(vids[idx]);
+  document.getElementById("ytLabel").textContent="🎬 "+l+" HIGHLIGHTS";
   var btns=document.getElementById("ytBtns");btns.innerHTML="";
   vids.forEach(function(v,i){
     var b=document.createElement("button");
-    b.className="yt-btn"+(i===idx?" on":"");b.textContent=v.t;
-    b.onclick=function(){loadYT(l,i);};
+    b.className="yt-btn"+(i===idx?" on":"");
+    b.textContent=v.t;
+    b.onclick=function(){
+      document.getElementById("ytFrame").src=getEmbedUrl(v);
+      document.querySelectorAll(".yt-btn").forEach(function(x,j){x.className="yt-btn"+(j===i?" on":"");});
+    };
     btns.appendChild(b);
   });
 }
 
+// Init league tabs
 var tabs=document.getElementById("tabs");
 L.forEach(function(l){
   var b=document.createElement("button");
-  b.className="tab"+(l==="WNBA"?" on":"");b.textContent=l;
+  b.className="tab"+(l==="WNBA"?" on":"");
+  b.textContent=l;
   b.onclick=function(){
     league=l;
     document.querySelectorAll(".tab").forEach(function(x,i){x.className="tab"+(L[i]===l?" on":"");});
     document.getElementById("abtn").textContent="⚡ ANALYZE "+l+" PROPS";
     document.getElementById("out").innerHTML="";
-    loadYT(l);
+    loadYT(l,0);
     document.getElementById("ytSection").style.display="block";
   };
   tabs.appendChild(b);
 });
-loadYT("WNBA");
+loadYT("WNBA",0);
 
 async function go(){
   var btn=document.getElementById("abtn");
@@ -195,7 +205,7 @@ async function go(){
     var r=await fetch("/props",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({league:league})});
     var d=await r.json();
     if(d.error)throw new Error(d.error);
-    if(!d.top_props||!d.top_props.length)throw new Error("No props returned — tap Try Again");
+    if(!d.top_props||!d.top_props.length)throw new Error("No props returned");
     props=d.top_props;
     var h='<div class="sum">'+d.summary+'</div>';
     d.top_props.forEach(function(p,i){
@@ -219,7 +229,7 @@ async function go(){
       h+='<div id="stat-season-'+i+'">';
       h+='<div class="stat-grid">';
       h+='<div class="stat-box"><div class="stat-val">'+(st.season_avg||"--")+'</div><div class="stat-lbl">SEASON AVG</div></div>';
-      h+='<div class="stat-box"><div class="stat-val" style="color:'+(st.season_avg>p.line?"#ff4444":"#00cc88")+'">'+(st.season_avg>p.line?"OVER LINE":"UNDER LINE")+'</div><div class="stat-lbl">VS LINE</div></div>';
+      h+='<div class="stat-box"><div class="stat-val" style="color:'+(st.season_avg>p.line?"#ff4444":"#00cc88")+'">'+(st.season_avg>p.line?"OVER":"UNDER")+'</div><div class="stat-lbl">VS LINE</div></div>';
       h+='<div class="stat-box"><div class="stat-val">'+(st.vs_opponent_avg||"--")+'</div><div class="stat-lbl">VS OPP</div></div>';
       h+='<div class="stat-box"><div class="stat-val">'+(st.home_away||"--")+'</div><div class="stat-lbl">HOME/AWAY</div></div>';
       h+='<div class="stat-box"><div class="stat-val">'+Math.round((st.team_win_pct||0)*100)+'%</div><div class="stat-lbl">TEAM WIN%</div></div>';
@@ -244,14 +254,17 @@ async function go(){
       h+='</div>';
       h+='<button class="cbtn" onclick="cp('+i+')">📋 Copy Pick</button></div>';
     });
-    h+='<div style="margin-top:20px"><div class="yt-label">🎬 '+league+' HIGHLIGHTS</div><div class="yt-wrap"><div class="yt-inner"><iframe src="https://www.youtube.com/embed/'+(YT[league]||YT.WNBA)[0].id+'?rel=0&modestbranding=1" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div></div></div>';
+    // Show highlights at bottom
+    var firstVid=YT[league]||YT.WNBA;
+    h+='<div style="margin-top:20px"><div class="yt-label">🎬 '+league+' HIGHLIGHTS</div><div class="yt-wrap"><div class="yt-inner"><iframe src="'+getEmbedUrl(firstVid[0])+'" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div></div></div>';
     document.getElementById("out").innerHTML=h;
     toast("🔥 "+d.top_props.length+" elite props found!");
   }catch(e){
     document.getElementById("ytSection").style.display="block";
     document.getElementById("out").innerHTML='<div class="err">⚠️ '+e.message+'<br><button class="rbtn" onclick="go()">🔄 Try Again</button></div>';
   }
-  btn.disabled=false;btn.textContent="⚡ ANALYZE "+league+" PROPS";
+  btn.disabled=false;
+  btn.textContent="⚡ ANALYZE "+league+" PROPS";
 }
 
 function toggleStats(i){
