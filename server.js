@@ -7,12 +7,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-
 const GROQ_KEY = process.env.GROQ_API_KEY;
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const PORT = process.env.PORT || 3000;
 
-// Map our league tabs to The Odds API sport keys
 const SPORT_KEYS = {
   WNBA: "basketball_wnba",
   NBA: "basketball_nba",
@@ -21,7 +19,6 @@ const SPORT_KEYS = {
   NFL: "americanfootball_nfl",
 };
 
-// Player-prop markets to request per sport
 const PROP_MARKETS = {
   WNBA: ["player_points", "player_rebounds", "player_assists", "player_threes"],
   NBA: ["player_points", "player_rebounds", "player_assists", "player_threes"],
@@ -44,6 +41,18 @@ const STAT_LABEL = {
   player_rush_yds: "Rushing Yards",
   player_receptions: "Receptions",
   player_reception_yds: "Receiving Yards",
+};
+
+// Stats that get hurt by blowouts (counting stats accumulate with minutes)
+const BLOWOUT_HURTS = ["Points", "Rebounds", "Assists", "Shots on Goal", "Receptions", "Receiving Yards", "Rushing Yards", "Passing Yards"];
+
+// Sport-specific blowout thresholds (spreads above these = blowout risk)
+const BLOWOUT_THRESHOLD = {
+  WNBA: 10,
+  NBA: 10,
+  MLB: 2.5,
+  NHL: 2.5,
+  NFL: 10,
 };
 
 function impliedProb(american) {
@@ -71,6 +80,36 @@ function abbr(name) {
   return last.slice(0, 3).toUpperCase();
 }
 
+// Pull game spread and total from h2h/spreads markets
+function extractGameContext(data, league) {
+  const bookmakers = data.bookmakers || [];
+  let spreads = [];
+  let totals = [];
+  for (const bk of bookmakers) {
+    for (const mk of bk.markets || []) {
+      if (mk.key === "spreads") {
+        for (const o of mk.outcomes || []) {
+          if (o.point != null) spreads.push(Math.abs(o.point));
+        }
+      }
+      if (mk.key === "totals") {
+        for (const o of mk.outcomes || []) {
+          if (o.point != null) totals.push(o.point);
+        }
+      }
+    }
+  }
+  const avgSpread = spreads.length ? spreads.reduce((a, b) => a + b, 0) / spreads.length : null;
+  const avgTotal = totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : null;
+  const threshold = BLOWOUT_THRESHOLD[league] || 10;
+  let blowout_level = "LOW";
+  if (avgSpread != null) {
+    if (avgSpread >= threshold + 4) blowout_level = "HIGH";
+    else if (avgSpread >= threshold) blowout_level = "MEDIUM";
+  }
+  return { spread: avgSpread, total: avgTotal, blowout_level };
+}
+
 async function fetchRealProps(league) {
   const sportKey = SPORT_KEYS[league];
   if (!sportKey || !ODDS_API_KEY) return null;
@@ -90,7 +129,8 @@ async function fetchRealProps(league) {
   });
   if (!todays.length) return [];
 
-  const markets = PROP_MARKETS[league].join(",");
+  // Now requesting spreads + totals alongside player props
+  const markets = [...PROP_MARKETS[league], "spreads", "totals"].join(",");
   const props = [];
 
   for (const ev of todays.slice(0, 6)) {
@@ -101,9 +141,14 @@ async function fetchRealProps(league) {
     const bookmakers = data.bookmakers || [];
     if (!bookmakers.length) continue;
 
+    // Extract game context (spread/total) for blowout detection
+    const gameContext = extractGameContext(data, league);
+
     const lineMap = new Map();
     for (const bk of bookmakers) {
       for (const mk of bk.markets || []) {
+        // Skip non-player-prop markets
+        if (mk.key === "spreads" || mk.key === "totals" || mk.key === "h2h") continue;
         for (const o of mk.outcomes || []) {
           const key = `${o.description}|${mk.key}|${o.point}`;
           if (!lineMap.has(key)) lineMap.set(key, { over: null, under: null, books: 0 });
@@ -123,15 +168,39 @@ async function fetchRealProps(league) {
       const fair = devig(overAvg, underAvg);
       if (!fair) continue;
 
-      const pick = fair.over > fair.under ? "OVER" : "UNDER";
-      const fairProb = Math.max(fair.over, fair.under);
+      let pick = fair.over > fair.under ? "OVER" : "UNDER";
+      let fairProb = Math.max(fair.over, fair.under);
+      const stat = STAT_LABEL[market] || market;
+
+      // BLOWOUT ADJUSTMENT: If high blowout risk and counting stat,
+      // boost UNDER probability (starters get pulled = under hits more)
+      let blowoutNote = null;
+      if (gameContext.blowout_level === "HIGH" && BLOWOUT_HURTS.includes(stat)) {
+        // Add 5% probability boost to UNDER side
+        const adjustedUnder = Math.min(0.95, fair.under + 0.05);
+        const adjustedOver = 1 - adjustedUnder;
+        if (adjustedUnder > adjustedOver) {
+          pick = "UNDER";
+          fairProb = adjustedUnder;
+          blowoutNote = `Spread of ${gameContext.spread.toFixed(1)} → starters likely pulled in 4th, leaning UNDER on counting stats.`;
+        }
+      } else if (gameContext.blowout_level === "MEDIUM" && BLOWOUT_HURTS.includes(stat)) {
+        const adjustedUnder = Math.min(0.95, fair.under + 0.025);
+        const adjustedOver = 1 - adjustedUnder;
+        if (adjustedUnder > adjustedOver) {
+          pick = "UNDER";
+          fairProb = adjustedUnder;
+          blowoutNote = `Spread of ${gameContext.spread.toFixed(1)} → moderate blowout risk, slight UNDER lean.`;
+        }
+      }
+
       props.push({
         player,
         team: abbr(ev.home_team),
         opponent: abbr(ev.away_team),
         home_team: ev.home_team,
         away_team: ev.away_team,
-        stat: STAT_LABEL[market] || market,
+        stat,
         market,
         line: parseFloat(point),
         pick,
@@ -142,6 +211,10 @@ async function fetchRealProps(league) {
           minute: "2-digit",
           timeZoneName: "short",
         }),
+        spread: gameContext.spread,
+        total: gameContext.total,
+        blowout_risk: gameContext.blowout_level,
+        blowout_note: blowoutNote,
       });
     }
   }
@@ -150,24 +223,23 @@ async function fetchRealProps(league) {
   return props.slice(0, 80);
 }
 
-// Groq AI enrichment - writes reasoning for real props
 async function enrichWithAI(league, realProps) {
   if (!GROQ_KEY || !realProps.length) return null;
   const date = new Date().toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
   });
 
-  const list = realProps.slice(0, 5).map((p, i) =>
-    `${i + 1}. ${p.player} ${p.pick} ${p.line} ${p.stat} (${p.away_team} @ ${p.home_team}, ${p.game_time}) — market-implied fair prob ${(p.fair_prob * 100).toFixed(1)}%`
+  const list = realProps.slice(0, 8).map((p, i) =>
+    `${i + 1}. ${p.player} ${p.pick} ${p.line} ${p.stat} (${p.away_team} @ ${p.home_team}, spread ${p.spread?.toFixed(1) || "?"}, blowout ${p.blowout_risk}) — fair prob ${(p.fair_prob * 100).toFixed(1)}%`
   ).join("\n");
 
-  const prompt = `Today is ${date}. League: ${league}. Below are 5 player props that are +EV vs PrizePicks based on devigged sportsbook consensus. For EACH prop, write 2-3 sharp sentences of reasoning covering: recent form vs the line, matchup angle, blowout/rotation risk. Be specific. Also write one "today's edge" summary sentence and pick the best 2-3 for a lineup.
+  const prompt = `Today is ${date}. League: ${league}. Below are top +EV player props with REAL game spreads and blowout risk. For each, write 2-3 sharp sentences covering recent form, matchup, and blowout impact. Be specific.
 
 Props:
 ${list}
 
 Return ONLY raw JSON, no markdown:
-{"summary":"one sharp sentence","best_lineup":["Player UNDER 16.5 Points","Player OVER 1.5 Hits"],"reasoning":[{"player":"name","text":"2-3 sentences","blowout_risk":"LOW|MEDIUM|HIGH","risk_factors":[{"factor":"Blowout Risk","level":"LOW","detail":"..."},{"factor":"Recent Form","level":"LOW","detail":"..."},{"factor":"Minutes Risk","level":"LOW","detail":"..."}]}]}`;
+{"summary":"one sharp sentence highlighting the day's best angle","best_lineup":["Player UNDER 16.5 Points"],"reasoning":[{"player":"name","text":"2-3 sentences"}]}`;
 
   try {
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -190,7 +262,6 @@ Return ONLY raw JSON, no markdown:
   }
 }
 
-// Fallback: pure AI mode when no games today
 async function aiOnlyProps(league) {
   if (!GROQ_KEY) throw new Error("No GROQ_API_KEY configured on server");
   const date = new Date().toLocaleDateString("en-US", {
@@ -231,6 +302,31 @@ function buildPayload(league, realProps, ai) {
   const top_props = realProps.slice(0, 80).map((p) => {
     const r = reasoningMap.get(p.player) || {};
     const confidence = Math.min(10, p.fair_prob * 10 + 1.5);
+
+    // Build risk factors from REAL data now
+    const riskFactors = [
+      {
+        factor: "Market Edge",
+        level: p.edge_score >= 7 ? "LOW" : p.edge_score >= 4 ? "MEDIUM" : "HIGH",
+        detail: `Fair prob ${(p.fair_prob * 100).toFixed(1)}% based on devigged sportsbook consensus.`
+      },
+      {
+        factor: "Blowout Risk",
+        level: p.blowout_risk || "LOW",
+        detail: p.spread != null
+          ? `Game spread: ${p.spread.toFixed(1)}${p.blowout_note ? " — " + p.blowout_note : ""}`
+          : "Spread data unavailable."
+      },
+      {
+        factor: "Game Total",
+        level: "LOW",
+        detail: p.total != null ? `Total points line: ${p.total}` : "Total unavailable."
+      }
+    ];
+
+    let reasoning = r.text || `Market consensus across books implies a fair probability of ${(p.fair_prob * 100).toFixed(1)}% on the ${p.pick} ${p.line}. PrizePicks lists this at a flat ${p.line}, giving a ${(p.edge_score).toFixed(1)}/10 edge after devigging.`;
+    if (p.blowout_note) reasoning += " " + p.blowout_note;
+
     return {
       player: p.player,
       team: abbr(p.home_team),
@@ -241,21 +337,17 @@ function buildPayload(league, realProps, ai) {
       edge_score: +p.edge_score.toFixed(1),
       confidence: +confidence.toFixed(1),
       combined_score: +((p.edge_score + confidence) / 2).toFixed(2),
-      reasoning: r.text || `Market consensus across books implies a fair probability of ${(p.fair_prob * 100).toFixed(1)}% on the ${p.pick} ${p.line}. PrizePicks lists this at a flat ${p.line}, giving a ${(p.edge_score).toFixed(1)}/10 edge after devigging.`,
-      blowout_risk: r.blowout_risk || "MEDIUM",
+      reasoning,
+      blowout_risk: p.blowout_risk || "LOW",
       game_time: p.game_time,
-      risk_factors: r.risk_factors || [
-        { factor: "Market Edge", level: "LOW", detail: `Fair prob ${(p.fair_prob * 100).toFixed(1)}% — strong consensus across books.` },
-        { factor: "Recent Form", level: "MEDIUM", detail: "Verify last 5 game log before locking." },
-        { factor: "Blowout Risk", level: "MEDIUM", detail: "Check game total and spread close to tip." },
-      ],
+      risk_factors: riskFactors,
     };
   });
 
   return {
     slate: league,
     date: new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
-    summary: ai?.summary || `${top_props.length} +EV ${league} props found vs PrizePicks consensus.`,
+    summary: ai?.summary || `${top_props.length} +EV ${league} props found vs PrizePicks consensus. Blowout-adjusted.`,
     best_lineup: ai?.best_lineup || top_props.slice(0, 3).map((p) => `${p.player} ${p.pick} ${p.line} ${p.stat}`),
     top_props,
     source: "real_odds",
@@ -269,10 +361,11 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "StatJunkie backend running",
-    version: "2.1.0",
+    version: "2.2.0",
     has_groq: !!GROQ_KEY,
     has_odds_api: !!ODDS_API_KEY,
     sports: Object.keys(SPORT_KEYS),
+    features: ["real_odds", "blowout_detection", "groq_reasoning"],
   });
 });
 
@@ -297,4 +390,4 @@ app.post("/props", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`StatJunkie v2.1 (Groq) on port ${PORT}`));
+app.listen(PORT, () => console.log(`StatJunkie v2.2 (Groq + Blowout Detection) on port ${PORT}`));
