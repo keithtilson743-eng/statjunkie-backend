@@ -53,13 +53,6 @@ const BLOWOUT_THRESHOLD = {
   NFL: 10,
 };
 
-function abbr(name) {
-  if (!name) return "";
-  const parts = name.split(" ");
-  const last = parts[parts.length - 1];
-  return last.slice(0, 3).toUpperCase();
-}
-
 function impliedProb(american) {
   if (american == null) return null;
   return american >= 0 ? 100 / (american + 100) : -american / (-american + 100);
@@ -78,13 +71,17 @@ function edgeScore(fairProb) {
   return Math.max(0, Math.min(10, e));
 }
 
-// Extract game context AND moneyline win probabilities
+function abbr(name) {
+  if (!name) return "";
+  const parts = name.split(" ");
+  const last = parts[parts.length - 1];
+  return last.slice(0, 3).toUpperCase();
+}
+
 function extractGameContext(data, league) {
   const bookmakers = data.bookmakers || [];
   let spreads = [];
   let totals = [];
-  // Moneyline: track each team's odds across books
-  const mlOdds = {};
   for (const bk of bookmakers) {
     for (const mk of bk.markets || []) {
       if (mk.key === "spreads") {
@@ -97,12 +94,6 @@ function extractGameContext(data, league) {
           if (o.point != null) totals.push(o.point);
         }
       }
-      if (mk.key === "h2h") {
-        for (const o of mk.outcomes || []) {
-          if (!mlOdds[o.name]) mlOdds[o.name] = [];
-          if (o.price != null) mlOdds[o.name].push(o.price);
-        }
-      }
     }
   }
   const avgSpread = spreads.length ? spreads.reduce((a, b) => a + b, 0) / spreads.length : null;
@@ -113,26 +104,7 @@ function extractGameContext(data, league) {
     if (avgSpread >= threshold + 4) blowout_level = "HIGH";
     else if (avgSpread >= threshold) blowout_level = "MEDIUM";
   }
-
-  // Devig moneyline to get fair win probabilities
-  const teams = Object.keys(mlOdds);
-  let winProbs = null;
-  if (teams.length === 2) {
-    const t1 = teams[0], t2 = teams[1];
-    const avg1 = mlOdds[t1].reduce((a, b) => a + b, 0) / mlOdds[t1].length;
-    const avg2 = mlOdds[t2].reduce((a, b) => a + b, 0) / mlOdds[t2].length;
-    const p1 = impliedProb(avg1);
-    const p2 = impliedProb(avg2);
-    if (p1 != null && p2 != null) {
-      const sum = p1 + p2;
-      winProbs = {
-        [t1]: p1 / sum,
-        [t2]: p2 / sum,
-      };
-    }
-  }
-
-  return { spread: avgSpread, total: avgTotal, blowout_level, winProbs };
+  return { spread: avgSpread, total: avgTotal, blowout_level };
 }
 
 async function fetchRealProps(league) {
@@ -144,7 +116,7 @@ async function fetchRealProps(league) {
   );
   if (!evRes.ok) throw new Error(`Odds API events failed: ${evRes.status}`);
   const events = await evRes.json();
-  if (!events.length) return { props: [], games: [] };
+  if (!events.length) return [];
 
   const now = Date.now();
   const cutoff = now + 36 * 3600 * 1000;
@@ -152,12 +124,10 @@ async function fetchRealProps(league) {
     const t = new Date(e.commence_time).getTime();
     return t >= now - 3 * 3600 * 1000 && t <= cutoff;
   });
-  if (!todays.length) return { props: [], games: [] };
+  if (!todays.length) return [];
 
-  // Include h2h (moneyline) in markets request
-  const markets = [...PROP_MARKETS[league], "spreads", "totals", "h2h"].join(",");
+  const markets = [...PROP_MARKETS[league], "spreads", "totals"].join(",");
   const props = [];
-  const games = [];
 
   for (const ev of todays.slice(0, 6)) {
     const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/events/${ev.id}/odds?apiKey=${ODDS_API_KEY}&regions=us&markets=${markets}&oddsFormat=american`;
@@ -168,33 +138,6 @@ async function fetchRealProps(league) {
     if (!bookmakers.length) continue;
 
     const gameContext = extractGameContext(data, league);
-
-    // Build game prediction for the games list
-    let predicted_winner = null;
-    let win_prob = null;
-    if (gameContext.winProbs) {
-      const sorted = Object.entries(gameContext.winProbs).sort((a, b) => b[1] - a[1]);
-      predicted_winner = sorted[0][0];
-      win_prob = sorted[0][1];
-    }
-
-    games.push({
-      home_team: ev.home_team,
-      away_team: ev.away_team,
-      home_abbr: abbr(ev.home_team),
-      away_abbr: abbr(ev.away_team),
-      game_time: new Date(ev.commence_time).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        timeZoneName: "short",
-      }),
-      spread: gameContext.spread,
-      total: gameContext.total,
-      blowout_risk: gameContext.blowout_level,
-      predicted_winner,
-      win_prob,
-      win_pct: win_prob != null ? +(win_prob * 100).toFixed(1) : null,
-    });
 
     const lineMap = new Map();
     for (const bk of bookmakers) {
@@ -268,7 +211,7 @@ async function fetchRealProps(league) {
   }
 
   props.sort((a, b) => b.edge_score - a.edge_score);
-  return { props: props.slice(0, 80), games };
+  return props.slice(0, 80);
 }
 
 async function enrichWithAI(league, realProps) {
@@ -340,11 +283,10 @@ Return ONLY raw JSON, no markdown:
     throw new Error("AI returned no props");
   }
   parsed.source = "ai_only";
-  parsed.games = [];
   return parsed;
 }
 
-function buildPayload(league, realProps, games, ai) {
+function buildPayload(league, realProps, ai) {
   const reasoningMap = new Map();
   (ai?.reasoning || []).forEach((r) => reasoningMap.set(r.player, r));
 
@@ -398,7 +340,6 @@ function buildPayload(league, realProps, games, ai) {
     summary: ai?.summary || `${top_props.length} +EV ${league} props found vs PrizePicks consensus. Blowout-adjusted.`,
     best_lineup: ai?.best_lineup || top_props.slice(0, 3).map((p) => `${p.player} ${p.pick} ${p.line} ${p.stat}`),
     top_props,
-    games: games || [],
     source: "real_odds",
   };
 }
@@ -410,11 +351,11 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "StatJunkie backend running",
-    version: "2.4.0",
+    version: "2.2.0",
     has_groq: !!GROQ_KEY,
     has_odds_api: !!ODDS_API_KEY,
     sports: Object.keys(SPORT_KEYS),
-    features: ["real_odds", "blowout_detection", "groq_reasoning", "game_predictions"],
+    features: ["real_odds", "blowout_detection", "groq_reasoning"],
   });
 });
 
@@ -425,10 +366,10 @@ app.post("/props", async (req, res) => {
 
   try {
     if (ODDS_API_KEY) {
-      const result = await fetchRealProps(league);
-      if (result && result.props && result.props.length) {
-        const ai = await enrichWithAI(league, result.props);
-        return res.json(buildPayload(league, result.props, result.games, ai));
+      const realProps = await fetchRealProps(league);
+      if (realProps && realProps.length) {
+        const ai = await enrichWithAI(league, realProps);
+        return res.json(buildPayload(league, realProps, ai));
       }
     }
     const aiPayload = await aiOnlyProps(league);
@@ -439,4 +380,4 @@ app.post("/props", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`StatJunkie v2.4 (Game Predictions) on port ${PORT}`));
+app.listen(PORT, () => console.log(`StatJunkie v2.2 (Groq + Blowout Detection) on port ${PORT}`));
