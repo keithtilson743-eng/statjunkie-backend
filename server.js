@@ -53,106 +53,6 @@ const BLOWOUT_THRESHOLD = {
   NFL: 10,
 };
 
-// Categorize each pick based on its profile
-function categorizePick(p) {
-  const edge = p.edge_score;
-  const blowout = p.blowout_risk;
-
-  // LOCK: high edge + low blowout risk = safest play
-  if (edge >= 7.5 && blowout === "LOW") {
-    return { tag: "🔒 LOCK", style: "lock", description: "Highest confidence play on the board" };
-  }
-  // ELITE: very high edge regardless of risk
-  if (edge >= 8.5) {
-    return { tag: "💎 ELITE", style: "elite", description: "Top-tier edge play" };
-  }
-  // SHARP: medium-high edge, where smart money goes
-  if (edge >= 6 && edge < 7.5) {
-    return { tag: "🎯 SHARP", style: "sharp", description: "Sharp money play" };
-  }
-  // VALUE: decent edge but not premium
-  if (edge >= 4 && edge < 6) {
-    return { tag: "💰 VALUE", style: "value", description: "Solid value play" };
-  }
-  // RISKY: high blowout risk
-  if (blowout === "HIGH") {
-    return { tag: "⚠️ RISKY", style: "risky", description: "High variance — blowout risk in play" };
-  }
-  // Default: standard pick
-  return { tag: "📊 STANDARD", style: "standard", description: "Standard market play" };
-}
-
-// Generate hype-style flavor text based on pick profile
-function hypeFlavor(p, cat) {
-  const stat = p.stat;
-  const pick = p.pick;
-  const line = p.line;
-  const player = p.player.split(" ").pop(); // last name
-  const fairPct = (p.fair_prob * 100).toFixed(0);
-
-  if (cat.style === "lock") {
-    const lines = [
-      `🔒 This is the safest play on the board. Hammer the ${pick}.`,
-      `🔒 Lock it in. Devigged fair prob ${fairPct}% — books are practically giving this away.`,
-      `🔒 The sharps are all over this. ${player} ${pick} ${line} is a smash.`,
-    ];
-    return lines[Math.floor(Math.random() * lines.length)];
-  }
-  if (cat.style === "elite") {
-    const lines = [
-      `💎 ELITE edge spotted. ${fairPct}% fair prob on the ${pick} — books haven't caught up yet.`,
-      `💎 This is the kind of edge that prints money. Don't sleep on ${player}.`,
-      `💎 Books are mispricing this. Take the ${pick} before the line moves.`,
-    ];
-    return lines[Math.floor(Math.random() * lines.length)];
-  }
-  if (cat.style === "sharp") {
-    const lines = [
-      `🎯 Sharp money is on the ${pick} here. ${fairPct}% fair prob across the consensus.`,
-      `🎯 Quiet edge play. Not flashy but the math is there.`,
-      `🎯 Where the wise guys are. ${player} ${pick} ${line} has real value.`,
-    ];
-    return lines[Math.floor(Math.random() * lines.length)];
-  }
-  if (cat.style === "value") {
-    const lines = [
-      `💰 Modest edge but priced right. ${fairPct}% fair prob.`,
-      `💰 Solid value here. Good lineup filler if you need to round out a slip.`,
-      `💰 Small edge, low risk. ${player} ${pick} is reasonable.`,
-    ];
-    return lines[Math.floor(Math.random() * lines.length)];
-  }
-  if (cat.style === "risky") {
-    const lines = [
-      `⚠️ HIGH variance. Blowout risk means starters get pulled — proceed with caution.`,
-      `⚠️ Could hit big or bust hard. This game is begging for garbage time.`,
-      `⚠️ Risky play. The spread says blowout — only touch this if you love the matchup.`,
-    ];
-    return lines[Math.floor(Math.random() * lines.length)];
-  }
-  return `📊 Standard market play. Fair prob ${fairPct}%.`;
-}
-
-// Generate punchy daily slate summary
-function dailySummary(props, league) {
-  if (!props.length) return `No ${league} edges found today.`;
-  const locks = props.filter(p => p.edge_score >= 7.5 && p.blowout_risk === "LOW").length;
-  const elites = props.filter(p => p.edge_score >= 8.5).length;
-  const blowouts = props.filter(p => p.blowout_risk === "HIGH").length;
-  const unders = props.filter(p => p.pick === "UNDER").length;
-  const overs = props.filter(p => p.pick === "OVER").length;
-
-  const parts = [];
-  if (elites > 0) parts.push(`💎 ${elites} ELITE play${elites > 1 ? "s" : ""}`);
-  if (locks > 0) parts.push(`🔒 ${locks} LOCK${locks > 1 ? "s" : ""}`);
-  if (blowouts > 3) parts.push(`⚠️ ${blowouts} blowout-risk games — fade counting stats`);
-  if (unders > overs * 1.5) parts.push(`📉 UNDER-heavy slate`);
-  else if (overs > unders * 1.5) parts.push(`📈 OVER-heavy slate`);
-
-  if (!parts.length) return `${props.length} +EV ${league} plays found across today's slate.`;
-  return `🎯 Today's ${league} slate: ${parts.join(" · ")}.`;
-}
-
 function impliedProb(american) {
   if (american == null) return null;
   return american >= 0 ? 100 / (american + 100) : -american / (-american + 100);
@@ -321,16 +221,16 @@ async function enrichWithAI(league, realProps) {
   });
 
   const list = realProps.slice(0, 8).map((p, i) =>
-    `${i + 1}. ${p.player} ${p.pick} ${p.line} ${p.stat} (spread ${p.spread?.toFixed(1) || "?"}, blowout ${p.blowout_risk}) — fair prob ${(p.fair_prob * 100).toFixed(1)}%`
+    `${i + 1}. ${p.player} ${p.pick} ${p.line} ${p.stat} (${p.away_team} @ ${p.home_team}, spread ${p.spread?.toFixed(1) || "?"}, blowout ${p.blowout_risk}) — fair prob ${(p.fair_prob * 100).toFixed(1)}%`
   ).join("\n");
 
-  const prompt = `Today is ${date}. League: ${league}. Below are top +EV player props. Write each reasoning with PERSONALITY — like a confident sharp bettor texting their friend. Use phrases like "smash this", "books are sleeping", "this is a lock", "fade this", "sharps love it". Keep it 2-3 sentences max per pick. Be punchy, not dry.
+  const prompt = `Today is ${date}. League: ${league}. Below are top +EV player props with REAL game spreads and blowout risk. For each, write 2-3 sharp sentences covering recent form, matchup, and blowout impact. Be specific.
 
 Props:
 ${list}
 
 Return ONLY raw JSON, no markdown:
-{"summary":"one punchy sentence about today's slate","best_lineup":["Player UNDER 16.5 Points"],"reasoning":[{"player":"name","text":"2-3 punchy sentences"}]}`;
+{"summary":"one sharp sentence highlighting the day's best angle","best_lineup":["Player UNDER 16.5 Points"],"reasoning":[{"player":"name","text":"2-3 sentences"}]}`;
 
   try {
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -359,9 +259,10 @@ async function aiOnlyProps(league) {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
   });
   const prompt = `Today is ${date}. League: ${league}.
-You are a sharp sports betting analyst with personality. Give 5 elite PrizePicks player props with 8.0+ confidence. Use realistic current-season players for ${league}. Write reasoning with PERSONALITY — "smash this", "books are sleeping", "lock it in", "fade this".
+You are a sharp sports betting analyst. Give 5 elite PrizePicks player props with 8.0+ confidence. Use realistic current-season players for ${league}.
+Consider blowout risk, recent form vs line, minutes/rotation, defensive matchup.
 Return ONLY raw JSON, no markdown:
-{"slate":"${league}","date":"${date}","summary":"one punchy sentence","best_lineup":["Player UNDER 16.5 Points"],"top_props":[{"player":"Full Name","team":"NYL","opponent":"PDX","stat":"Points","line":16.5,"pick":"UNDER","edge_score":8.5,"confidence":9.0,"combined_score":8.75,"reasoning":"2-3 punchy sentences","blowout_risk":"HIGH","game_time":"7:00 PM ET","risk_factors":[{"factor":"Blowout Risk","level":"HIGH","detail":"..."},{"factor":"Minutes Risk","level":"HIGH","detail":"..."},{"factor":"Recent Form","level":"LOW","detail":"..."}]}]}`;
+{"slate":"${league}","date":"${date}","summary":"one sharp sentence","best_lineup":["Player UNDER 16.5 Points"],"top_props":[{"player":"Full Name","team":"NYL","opponent":"PDX","stat":"Points","line":16.5,"pick":"UNDER","edge_score":8.5,"confidence":9.0,"combined_score":8.75,"reasoning":"3-4 sentences","blowout_risk":"HIGH","game_time":"7:00 PM ET","risk_factors":[{"factor":"Blowout Risk","level":"HIGH","detail":"..."},{"factor":"Minutes Risk","level":"HIGH","detail":"..."},{"factor":"Recent Form","level":"LOW","detail":"..."}]}]}`;
 
   const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -392,8 +293,6 @@ function buildPayload(league, realProps, ai) {
   const top_props = realProps.slice(0, 80).map((p) => {
     const r = reasoningMap.get(p.player) || {};
     const confidence = Math.min(10, p.fair_prob * 10 + 1.5);
-    const cat = categorizePick(p);
-    const hype = hypeFlavor(p, cat);
 
     const riskFactors = [
       {
@@ -415,13 +314,8 @@ function buildPayload(league, realProps, ai) {
       }
     ];
 
-    // Build reasoning: hype line first, then Groq's reasoning (or fallback)
-    let reasoning = `${cat.tag} — ${hype}`;
-    if (r.text) {
-      reasoning += ` ${r.text}`;
-    } else if (p.blowout_note) {
-      reasoning += ` ${p.blowout_note}`;
-    }
+    let reasoning = r.text || `Market consensus across books implies a fair probability of ${(p.fair_prob * 100).toFixed(1)}% on the ${p.pick} ${p.line}. PrizePicks lists this at a flat ${p.line}, giving a ${(p.edge_score).toFixed(1)}/10 edge after devigging.`;
+    if (p.blowout_note) reasoning += " " + p.blowout_note;
 
     return {
       player: p.player,
@@ -434,7 +328,6 @@ function buildPayload(league, realProps, ai) {
       confidence: +confidence.toFixed(1),
       combined_score: +((p.edge_score + confidence) / 2).toFixed(2),
       reasoning,
-      category: cat.tag,
       blowout_risk: p.blowout_risk || "LOW",
       game_time: p.game_time,
       risk_factors: riskFactors,
@@ -444,7 +337,7 @@ function buildPayload(league, realProps, ai) {
   return {
     slate: league,
     date: new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
-    summary: ai?.summary || dailySummary(realProps, league),
+    summary: ai?.summary || `${top_props.length} +EV ${league} props found vs PrizePicks consensus. Blowout-adjusted.`,
     best_lineup: ai?.best_lineup || top_props.slice(0, 3).map((p) => `${p.player} ${p.pick} ${p.line} ${p.stat}`),
     top_props,
     source: "real_odds",
@@ -458,11 +351,11 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "StatJunkie backend running",
-    version: "2.3.0",
+    version: "2.2.0",
     has_groq: !!GROQ_KEY,
     has_odds_api: !!ODDS_API_KEY,
     sports: Object.keys(SPORT_KEYS),
-    features: ["real_odds", "blowout_detection", "groq_reasoning", "pick_categories", "hype_flavor"],
+    features: ["real_odds", "blowout_detection", "groq_reasoning"],
   });
 });
 
@@ -487,4 +380,4 @@ app.post("/props", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`StatJunkie v2.3 (Personality + Categories) on port ${PORT}`));
+app.listen(PORT, () => console.log(`StatJunkie v2.2 (Groq + Blowout Detection) on port ${PORT}`));
